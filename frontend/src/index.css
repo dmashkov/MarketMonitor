@@ -1,0 +1,79 @@
+/**
+ * Global Styles
+ *
+ * Using Tailwind CSS for styling
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+/* Body styles */
+body {
+  @apply bg-gray-50 text-gray-900 font-sans;
+}
+
+/* Link styles */
+a {
+  @apply text-blue-600 hover:text-blue-700 transition;
+}
+
+/* Button reset */
+button {
+  @apply font-medium cursor-pointer;
+}
+
+button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Input styles */
+input,
+textarea,
+select {
+  @apply bg-white border-gray-300;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  @apply border-blue-500 ring-blue-500;
+}
+
+/* Loading animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}

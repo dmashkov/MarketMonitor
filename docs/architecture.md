@@ -25,14 +25,19 @@
 ## 2. Технологический стек
 
 ### Frontend
-- **React 18+** с TypeScript - основной фреймворк
-- **Vite** - быстрый bundler
+- **React 18+** с **TypeScript (strict mode)** - основной фреймворк
+  - ✅ Строгая типизация (NO `any`)
+  - ✅ Все функции и переменные типизированы
+  - ✅ Type guards для runtime проверок
+- **Vite** - быстрый bundler (оптимизирован для SPA)
 - **Ant Design** / **shadcn/ui** - компоненты UI
-- **Zustand** - управление состоянием приложения
-- **TanStack Query (React Query)** - кеширование и синхронизация данных с сервером
+- **Zustand** - управление состоянием приложения (с полной типизацией)
+- **TanStack Query (React Query)** - кеширование и синхронизация данных (типизированные hooks)
+- **React Router 6** - маршруты (SPA routing)
 - **Recharts** - интерактивные графики и диаграммы
 - **Tailwind CSS** - утилити для стилизации
-- **Хостинг:** Netlify
+- **zod** - валидация типов на runtime
+- **Хостинг:** Netlify (статический SPA с правильной конфигурацией)
 
 ### Backend & Database
 - **Supabase** - полнофункциональный Backend-as-a-Service
@@ -44,8 +49,8 @@
   - **Realtime** (опционально) - для live-обновлений
 
 ### AI Layer
-- **Anthropic Claude API** (Claude Sonnet 4) - основной LLM для поиска информации
-- **Web Search Tool** - поиск информации в интернете
+- **OpenAI API** (GPT-4 / GPT-4-turbo) - основной LLM для поиска информации
+- **Web Search Tool** (встроенный в OpenAI) - поиск информации в интернете
 - **Промпты** - хранятся в БД и управляются через админ-панель
 
 ### CI/CD & Автоматизация
@@ -746,7 +751,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
 4. Мониторинг выполнения (real-time)
    ├─ Статус: "Отправляю запрос..."
-   ├─ Статус: "Claude AI обрабатывает..."
+   ├─ Статус: "OpenAI обрабатывает..."
    ├─ Статус: "Сохраняю события..."
    └─ Результат: "Найдено 15 новых событий"
 
@@ -764,8 +769,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 2. Проверяется, что user = admin (RLS)
 3. Загружается промпт из БД
 4. Подставляются параметры в template
-5. Вызывается Anthropic Claude API с инструкцией вернуть JSON
-6. Результаты парсятся и валидируются
+5. Вызывается OpenAI API (GPT-4 Turbo / GPT-4o) с инструкцией вернуть JSON
+6. Результаты парсятся и валидируются (типизированные интерфейсы!)
 7. Новые события сохраняются в таблицу events
 8. Записываются в search_runs с количеством найденных
 9. Frontend показывает результаты real-time (опционально через Realtime)
@@ -927,8 +932,8 @@ jobs:
 2. Кнопка "Анализировать"
 3. Система:
    - Загружает события за период
-   - Отправляет их в Claude API с инструкцией суммаризировать
-   - Claude возвращает:
+   - Отправляет их в OpenAI API (GPT-4 Turbo / GPT-4o) с инструкцией суммаризировать
+   - OpenAI возвращает (типизированный JSON):
      * Топ 5 ключевых событий
      * Основные тренды на рынке
      * Оценка активности
@@ -1378,38 +1383,43 @@ market-monitor/
 
 ---
 
-## 13. Интеграция с Claude API
+## 13. Интеграция с OpenAI API
 
 ### Основное использование
 
 ```typescript
 // Edge Function ai-search/index.ts
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
-const client = new Anthropic({
-  apiKey: Deno.env.get("ANTHROPIC_API_KEY"),
+interface AISearchResult {
+  date: string;
+  segment: string;
+  event_type: string;
+  company: string;
+  description: string;
+  criticality: number;
+  source_url: string;
+}
+
+interface AISearchResponse {
+  events: AISearchResult[];
+  total_found: number;
+  search_query: string;
+}
+
+const client = new OpenAI({
+  apiKey: Deno.env.get("OPENAI_API_KEY"),
 });
 
-export async function executeAISearch(promptText: string) {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514", // Latest Claude
+export async function executeAISearch(promptText: string): Promise<AISearchResponse> {
+  const response = await client.chat.completions.create({
+    model: "gpt-4-turbo", // GPT-4 Turbo (or gpt-4o for faster/cheaper)
     max_tokens: 4096,
+    temperature: 0.5,
     system: `You are a market research AI assistant for the Russian climate equipment market.
              Extract structured data about market events.
-             Always return valid JSON in the format: [{ date, segment, event_type, company, description, criticality, source_url }]`,
-    tools: [
-      {
-        name: "web_search",
-        description: "Search the web for information about market events",
-        input_schema: {
-          type: "object",
-          properties: {
-            query: { type: "string", description: "Search query" },
-          },
-          required: ["query"],
-        },
-      },
-    ],
+             Always return valid JSON in the format: { "events": [{ "date": "YYYY-MM-DD", "segment": "...", "event_type": "...", "company": "...", "description": "...", "criticality": 1-5, "source_url": "..." }], "total_found": number }
+             Do NOT include markdown code blocks - only pure JSON.`,
     messages: [
       {
         role: "user",
@@ -1418,23 +1428,71 @@ export async function executeAISearch(promptText: string) {
     ],
   });
 
-  return response;
+  // Type-safe extraction of content
+  const content = response.choices[0]?.message.content;
+  if (!content) {
+    throw new Error("Empty response from OpenAI API");
+  }
+
+  // Parse JSON (with error handling)
+  const result: AISearchResponse = JSON.parse(content);
+  return result;
+}
+```
+
+### Требования к типизации
+
+**✅ ОБЯЗАТЕЛЬНО:**
+- Все типы переменных явно определены
+- Функции имеют явные параметры и return типы
+- Нет `any`, `unknown`, или беззаботных приведений типов
+- API ответы типизированы через interface
+- Использование type guards для runtime проверок
+
+**Пример правильного кода:**
+```typescript
+// ✅ Правильно
+interface OpenAIMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+interface OpenAIRequest {
+  model: string;
+  messages: OpenAIMessage[];
+  max_tokens: number;
+}
+
+async function callOpenAI(request: OpenAIRequest): Promise<string> {
+  // ... implementation
+}
+
+// ❌ Неправильно
+async function callOpenAI(request: any): Promise<any> {
+  // NO!
 }
 ```
 
 ### Cost estimation
 
 ```
-Примерные затраты на Claude API:
-- 1 запрос поиска: ~2000 input + 1000 output токенов
-- Input: ~$0.003 (при цене $1.5 per 1M tokens)
-- Output: ~$0.003 (при цене $3 per 1M tokens)
-- За запрос: ~$0.006
-- Если 1 поиск в день: ~$0.18/месяц
-- Если 5 поисков в день: ~$0.90/месяц
-- Если 20 поисков в день: ~$3.60/месяц
+Примерные затраты на OpenAI API:
+- GPT-4 Turbo Input: $0.01 per 1K tokens
+- GPT-4 Turbo Output: $0.03 per 1K tokens
+- GPT-4o (faster) Input: $0.005 per 1K tokens
+- GPT-4o Output: $0.015 per 1K tokens
 
-ВЫВОД: Claude API очень дешево, можно частые запуски!
+Примерный расход на один поиск:
+- Input: ~2000 tokens = ~$0.01-0.02
+- Output: ~1000 tokens = ~$0.015-0.03
+- За запрос: ~$0.025-0.05
+
+Масштабирование:
+- 1 поиск в день: ~$0.75/месяц
+- 5 поисков в день: ~$3.75/месяц
+- 20 поисков в день: ~$15/месяц
+
+Рекомендация: Использовать GPT-4o для лучшего баланса цены и качества
 ```
 
 ---

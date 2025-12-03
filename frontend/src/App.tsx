@@ -1,44 +1,31 @@
 /**
  * Main Application Component
  *
- * Handles routing, authentication, and global state management
+ * Обработка маршрутизации, аутентификации и глобального управления состоянием
  */
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 
-// Import Supabase utilities
-import { supabase, onAuthStateChanged } from './lib/supabase';
-
-// Import types
-import type { Session } from '@supabase/supabase-js';
-
-// Import pages
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
+// Импорт компонентов аутентификации
+import { LoginPage, RegisterPage, ProtectedRoute } from './modules/auth';
 import NotFoundPage from './pages/NotFoundPage';
 
-// Layout components (to be created)
-// import AppLayout from './components/layout/AppLayout';
-// import AdminLayout from './components/layout/AdminLayout';
-// import UserLayout from './components/layout/UserLayout';
+// Импорт компонентов макета
+import AppLayout from './shared/components/layout/AppLayout';
 
-// Page components (to be created)
-// import DashboardPage from './pages/DashboardPage';
-// import EventsPage from './pages/EventsPage';
-// import ReportsPage from './pages/ReportsPage';
-// import UsersPage from './pages/admin/UsersPage';
-// import PromptsPage from './pages/admin/PromptsPage';
-// import SchedulerPage from './pages/admin/SchedulerPage';
+// Импорт страниц
+import DashboardPage from './modules/dashboard/pages/DashboardPage';
+// import EventsPage from './modules/events/pages/EventsPage';
+// import ReportsPage from './modules/export/pages/ReportsPage';
 
-// Initialize React Query
+// Инициализация React Query
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000, // 5 минут
     },
     mutations: {
       retry: 1,
@@ -46,104 +33,21 @@ const queryClient = new QueryClient({
   },
 });
 
-/**
- * Protected Route Component
- * Ensures only authenticated users can access the route
- */
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen to auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    return () => subscription?.unsubscribe();
-  }, []);
-
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-}
 
 /**
- * Admin Route Component
- * Ensures only admin users can access the route
- */
-function AdminRoute({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      const session = await supabase.auth.getSession();
-
-      if (!session.data.session) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('id', session.data.session.user.id)
-        .single();
-
-      if (error) {
-        console.error('Failed to fetch user role:', error);
-        setLoading(false);
-        return;
-      }
-
-      setRole(data?.role);
-      setLoading(false);
-    };
-
-    checkAdminRole();
-  }, []);
-
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
-  if (role !== 'admin') {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  return <>{children}</>;
-}
-
-/**
- * Main App Component
+ * Основной компонент приложения
  */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          {/* Public Routes */}
+          {/* Публичные маршруты */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Dashboard & Main Routes */}
-          {/* <Route
+          {/* Основные защищенные маршруты */}
+          <Route
             path="/"
             element={
               <ProtectedRoute>
@@ -154,7 +58,7 @@ function App() {
             }
           />
 
-          <Route
+          {/* <Route
             path="/events"
             element={
               <ProtectedRoute>
@@ -176,16 +80,14 @@ function App() {
             }
           /> */}
 
-          {/* Admin Routes */}
+          {/* Маршруты администратора */}
           {/* <Route
             path="/admin/users"
             element={
               <ProtectedRoute>
-                <AdminRoute>
-                  <AdminLayout>
-                    <UsersPage />
-                  </AdminLayout>
-                </AdminRoute>
+                <AppLayout>
+                  <UsersPage />
+                </AppLayout>
               </ProtectedRoute>
             }
           />
@@ -194,11 +96,9 @@ function App() {
             path="/admin/prompts"
             element={
               <ProtectedRoute>
-                <AdminRoute>
-                  <AdminLayout>
-                    <PromptsPage />
-                  </AdminLayout>
-                </AdminRoute>
+                <AppLayout>
+                  <PromptsPage />
+                </AppLayout>
               </ProtectedRoute>
             }
           />
@@ -207,26 +107,26 @@ function App() {
             path="/admin/scheduler"
             element={
               <ProtectedRoute>
-                <AdminRoute>
-                  <AdminLayout>
-                    <SchedulerPage />
-                  </AdminLayout>
-                </AdminRoute>
+                <AppLayout>
+                  <SchedulerPage />
+                </AppLayout>
               </ProtectedRoute>
             }
           /> */}
 
-          {/* Error Routes */}
+          {/* Маршруты ошибок */}
           <Route
             path="/unauthorized"
             element={
-              <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">403 - Доступ запрещен</h1>
-                  <p className="text-gray-600 mb-6">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '16px' }}>
+                    403 - Доступ запрещен
+                  </h1>
+                  <p style={{ color: '#666', marginBottom: '24px' }}>
                     У вас нет прав доступа к этому разделу
                   </p>
-                  <a href="/" className="text-blue-600 hover:underline">
+                  <a href="/" style={{ color: '#1890ff', textDecoration: 'underline' }}>
                     Вернуться на главную
                   </a>
                 </div>
@@ -234,7 +134,7 @@ function App() {
             }
           />
 
-          {/* 404 Route */}
+          {/* 404 маршрут */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>

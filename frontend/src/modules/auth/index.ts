@@ -1,12 +1,13 @@
 /**
  * Auth Module Exports
  *
- * Central export point for all auth-related code
- * Ensures proper module isolation
+ * Central exports for authentication module
  */
 
+export { LoginForm } from './components/LoginForm';
+export { RegisterForm } from './components/RegisterForm';
+export { AuthLayout } from './components/AuthLayout';
+export { LoginPage } from './components/LoginPage';
+export { RegisterPage } from './components/RegisterPage';
 export { ProtectedRoute } from './components/ProtectedRoute';
-export { useAuth } from './hooks/useAuth';
-
-// Type exports (for other modules)
-export type { } from '@/shared/types'; // Re-export shared types if needed
+export { default as useAuth } from './hooks/useAuth';

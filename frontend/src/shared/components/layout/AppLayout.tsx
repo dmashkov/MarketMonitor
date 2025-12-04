@@ -77,25 +77,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             type: 'divider' as const,
           },
           {
-            key: 'admin-group',
-            label: 'Администрирование',
-            children: [
-              {
-                key: '/admin/users',
-                label: 'Пользователи',
-                onClick: () => navigate('/admin/users'),
-              },
-              {
-                key: '/admin/prompts',
-                label: 'Промпты',
-                onClick: () => navigate('/admin/prompts'),
-              },
-              {
-                key: '/admin/scheduler',
-                label: 'Планировщик',
-                onClick: () => navigate('/admin/scheduler'),
-              },
-            ],
+            key: '/admin',
+            label: '⚙️ Администрирование',
+            onClick: () => navigate('/admin'),
           },
         ]
       : []),

@@ -1,0 +1,135 @@
+/**
+ * AdminPanel
+ *
+ * Страница администрирования приложения
+ * Заглушка для Phase 3
+ */
+
+import React from 'react';
+import { Card, Empty, Tag, Tabs, Alert } from 'antd';
+import { LockOutlined } from '@ant-design/icons';
+import AppLayout from '../../../shared/components/layout/AppLayout';
+import useAuth from '../../../modules/auth/hooks/useAuth';
+
+/**
+ * Компонент админ-панели
+ */
+export const AdminPanel: React.FC = () => {
+  const { isAdmin } = useAuth();
+
+  if (!isAdmin) {
+    return (
+      <AppLayout>
+        <div style={{ padding: '24px' }}>
+          <Alert
+            message="Доступ запрещен"
+            description="Только администраторы могут получить доступ к этой странице"
+            type="error"
+            showIcon
+            icon={<LockOutlined />}
+            style={{ marginBottom: '24px' }}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout>
+      <div style={{ padding: '24px' }}>
+        <h1>Администрирование</h1>
+
+        <Tabs
+          items={[
+            {
+              key: 'users',
+              label: '👥 Пользователи',
+              children: (
+                <Card style={{ marginTop: '16px' }}>
+                  <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <Empty
+                      description={
+                        <div>
+                          <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
+                            👥 Управление пользователями
+                          </p>
+                          <p style={{ color: '#666' }}>
+                            Функционал будет реализован в Phase 3
+                          </p>
+                        </div>
+                      }
+                    />
+                    <div style={{ marginTop: '24px' }}>
+                      <Tag color="blue">Phase 3</Tag>
+                      <p style={{ color: '#999', fontSize: '12px', marginTop: '12px' }}>
+                        Будет включено: список пользователей, создание, редактирование, удаление
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ),
+            },
+            {
+              key: 'prompts',
+              label: '📝 Промпты',
+              children: (
+                <Card style={{ marginTop: '16px' }}>
+                  <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <Empty
+                      description={
+                        <div>
+                          <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
+                            📝 Библиотека промптов
+                          </p>
+                          <p style={{ color: '#666' }}>
+                            Функционал будет реализован в Phase 3
+                          </p>
+                        </div>
+                      }
+                    />
+                    <div style={{ marginTop: '24px' }}>
+                      <Tag color="blue">Phase 3</Tag>
+                      <p style={{ color: '#999', fontSize: '12px', marginTop: '12px' }}>
+                        Будет включено: CRUD промптов, редактор, тестирование
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ),
+            },
+            {
+              key: 'scheduler',
+              label: '⏱️ Расписание',
+              children: (
+                <Card style={{ marginTop: '16px' }}>
+                  <div style={{ textAlign: 'center', padding: '40px' }}>
+                    <Empty
+                      description={
+                        <div>
+                          <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
+                            ⏱️ Планировщик задач
+                          </p>
+                          <p style={{ color: '#666' }}>
+                            Функционал будет реализован в Phase 3
+                          </p>
+                        </div>
+                      }
+                    />
+                    <div style={{ marginTop: '24px' }}>
+                      <Tag color="blue">Phase 3</Tag>
+                      <p style={{ color: '#999', fontSize: '12px', marginTop: '12px' }}>
+                        Будет включено: управление расписаниями, CRON выражения, логи
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ),
+            },
+          ]}
+        />
+      </div>
+    </AppLayout>
+  );
+};
+
+export default AdminPanel;

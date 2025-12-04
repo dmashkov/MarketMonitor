@@ -16,8 +16,9 @@ import AppLayout from './shared/components/layout/AppLayout';
 
 // Импорт страниц
 import DashboardPage from './modules/dashboard/pages/DashboardPage';
-// import EventsPage from './modules/events/pages/EventsPage';
-// import ReportsPage from './modules/export/pages/ReportsPage';
+import EventsPage from './modules/events/pages/EventsPage';
+import ReportsPage from './modules/export/pages/ReportsPage';
+import AdminPanel from './modules/admin/pages/AdminPanel';
 
 // Инициализация React Query
 const queryClient = new QueryClient({
@@ -58,7 +59,7 @@ function App() {
             }
           />
 
-          {/* <Route
+          <Route
             path="/events"
             element={
               <ProtectedRoute>
@@ -78,9 +79,20 @@ function App() {
                 </AppLayout>
               </ProtectedRoute>
             }
-          /> */}
+          />
 
           {/* Маршруты администратора */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AdminPanel />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+
           {/* <Route
             path="/admin/users"
             element={

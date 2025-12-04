@@ -9,7 +9,7 @@ import React, { useState } from 'react';
 import { Layout, Menu, Dropdown, Avatar, Button, Drawer } from 'antd';
 import { MenuFoldOutlined, MenuUnfoldOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import useAuth from '../../modules/auth/hooks/useAuth';
+import useAuth from '../../../modules/auth/hooks/useAuth';
 import type { MenuProps } from 'antd';
 
 const { Header, Sider, Content } = Layout;

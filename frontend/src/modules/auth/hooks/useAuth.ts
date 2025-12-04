@@ -85,17 +85,39 @@ export const useAuth = (): AuthContextType => {
   const registerMutation = useMutation<void, Error, { email: string; password: string; fullName?: string }>(
     {
       mutationFn: async ({ email, password, fullName }): Promise<void> => {
-        const { error } = await supabase.auth.signUp({
+        // 1. Создать пользователя через Auth
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               full_name: fullName || null,
             },
+            // Отключаем требование подтверждения почты для локального тестирования
+            emailRedirectTo: `${window.location.origin}/login`,
           },
         });
 
-        if (error) throw error;
+        if (signUpError) throw signUpError;
+        if (!authData.user) throw new Error('Пользователь не был создан');
+
+        // 2. Создать профиль пользователя в user_profiles таблице
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: authData.user.id,
+            email: email,
+            full_name: fullName || null,
+            role: 'user', // По умолчанию обычный пользователь
+            is_active: true, // Активен по умолчанию
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+
+        if (profileError) {
+          // Если профиль не создался - это не критично для первой регистрации
+          console.warn('Предупреждение при создании профиля:', profileError.message);
+        }
       },
       onSuccess: async (): Promise<void> => {
         // Invalidate and refetch auth data

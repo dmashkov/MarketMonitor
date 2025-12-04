@@ -8,7 +8,6 @@
 import React from 'react';
 import { Card, Empty, Tag, Tabs, Alert } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
-import AppLayout from '../../../shared/components/layout/AppLayout';
 import useAuth from '../../../modules/auth/hooks/useAuth';
 
 /**
@@ -19,24 +18,21 @@ export const AdminPanel: React.FC = () => {
 
   if (!isAdmin) {
     return (
-      <AppLayout>
-        <div style={{ padding: '24px' }}>
-          <Alert
-            message="Доступ запрещен"
-            description="Только администраторы могут получить доступ к этой странице"
-            type="error"
-            showIcon
-            icon={<LockOutlined />}
-            style={{ marginBottom: '24px' }}
-          />
-        </div>
-      </AppLayout>
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="Доступ запрещен"
+          description="Только администраторы могут получить доступ к этой странице"
+          type="error"
+          showIcon
+          icon={<LockOutlined />}
+          style={{ marginBottom: '24px' }}
+        />
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div style={{ padding: '24px' }}>
+    <div style={{ padding: '24px' }}>
         <h1>Администрирование</h1>
 
         <Tabs
@@ -128,7 +124,7 @@ export const AdminPanel: React.FC = () => {
           ]}
         />
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

@@ -8,15 +8,13 @@
 import React from 'react';
 import { Card, Empty, Tag, Button, Space } from 'antd';
 import { DownloadOutlined, FileExcelOutlined } from '@ant-design/icons';
-import AppLayout from '../../../shared/components/layout/AppLayout';
 
 /**
  * Компонент страницы отчетов
  */
 export const ReportsPage: React.FC = () => {
   return (
-    <AppLayout>
-      <div style={{ padding: '24px' }}>
+    <div style={{ padding: '24px' }}>
         <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1>Отчеты</h1>
           <Space>
@@ -52,7 +50,7 @@ export const ReportsPage: React.FC = () => {
           </div>
         </Card>
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

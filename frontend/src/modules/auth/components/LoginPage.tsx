@@ -24,8 +24,8 @@ export const LoginPage: React.FC = () => {
   const state = location.state as LocationState | null;
 
   const handleSuccess = (): void => {
-    // Redirect to intended page or dashboard
-    const from = state?.from?.pathname || '/dashboard';
+    // Редирект на предполагаемую страницу или дашборд
+    const from = state?.from?.pathname || '/';
     navigate(from);
   };
 

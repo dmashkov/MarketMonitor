@@ -125,8 +125,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
           </Form.Item>
 
           <Form.Item
-            label="Полное имя (опционально)"
+            label="Полное имя"
             name="fullName"
+            rules={[
+              { required: true, message: 'Полное имя обязательно' },
+              { min: 2, message: 'Полное имя должно быть не менее 2 символов' },
+            ]}
           >
             <Input
               placeholder="Иван Иванов"

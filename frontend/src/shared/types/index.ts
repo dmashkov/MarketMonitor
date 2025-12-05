@@ -78,21 +78,140 @@ export type Segment =
   | 'iot'
   | 'услуги';
 
+/**
+ * ============================================================================
+ * NEW: Segment Entity Types (Database entities)
+ * ============================================================================
+ */
+
+export interface SegmentEntity {
+  id: string;
+  name: string; // e.g., "RAC (Room Air Conditioner)"
+  code: string; // e.g., "RAC", "VRF", "CHILLER"
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * ============================================================================
+ * NEW: Geography Types
+ * ============================================================================
+ */
+
+export type GeographyType = 'country' | 'region' | 'city';
+
+export interface Geography {
+  id: string;
+  name: string; // e.g., "Россия", "Центральный ФО", "Москва"
+  code: string; // e.g., "RU", "RU_CFO", "RU_MOW"
+  type: GeographyType;
+  parent_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * ============================================================================
+ * NEW: Source Management Types
+ * ============================================================================
+ */
+
+export type SourceTypeCode =
+  | 'DISTRIBUTOR'       // Дистрибьютор
+  | 'MANUFACTURER'      // Производитель
+  | 'BUSINESS_MEDIA'    // Деловые СМИ
+  | 'TELEGRAM'          // Telegram канал
+  | 'ASSOCIATION'       // Профессиональная ассоциация
+  | 'INDUSTRY_PORTAL';  // Отраслевой портал
+
+export interface SourceType {
+  id: string;
+  name: string;
+  code: SourceTypeCode;
+  description: string | null;
+  created_at: string;
+}
+
+export type CheckFrequency = 'daily' | 'weekly' | 'monthly';
+
+export interface Source {
+  id: string;
+  name: string; // e.g., "Русклимат", "MIDEA Russia"
+  source_type_id: string;
+  website_url: string | null;
+  telegram_channel: string | null;
+  description: string | null;
+  is_active: boolean;
+  priority: number; // 1-10
+  check_frequency: CheckFrequency;
+  last_checked_at: string | null;
+  metadata: Record<string, unknown>; // NO any!
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+export interface SourceWithType extends Source {
+  source_type?: SourceType;
+}
+
+export type SourceUrlType = 'news' | 'products' | 'blog' | 'press-release';
+
+export interface SourceUrl {
+  id: string;
+  source_id: string;
+  url: string;
+  url_type: SourceUrlType;
+  description: string | null;
+  is_active: boolean;
+  check_frequency: CheckFrequency;
+  last_checked_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SourceUrlWithSource extends SourceUrl {
+  source?: Source;
+}
+
+/**
+ * ============================================================================
+ * UPDATED: Market Event Types (with new fields)
+ * ============================================================================
+ */
+
+export type CriticalityLevel = 1 | 2 | 3 | 4 | 5;
+
 export interface MarketEvent {
   id: string;
   date: string; // ISO date (YYYY-MM-DD)
-  segment: Segment;
-  geography: string | null; // Region name
+  segment: Segment; // Legacy field (for backward compatibility)
+  geography: string | null; // Legacy field (for backward compatibility)
   channel: Channel | null;
   event_type: EventType;
   company: string | null; // Company name
   description: string;
-  criticality: number; // 1-5
-  source_url: string | null; // URL to original source
+  criticality: number; // 1-5 (deprecated, use criticality_level)
+  source_url: string | null; // Direct URL to original source
   raw_data: Record<string, unknown>; // Raw AI response (NO any!)
   found_by_search_run_id?: string; // FK to search_runs
+
+  // NEW FIELDS:
+  source_id: string | null; // FK to sources
+  criticality_level: CriticalityLevel; // 1=низкая, 2=средняя, 3=обычная, 4=высокая, 5=критическая
+  segment_id: string | null; // FK to segments
+  geography_id: string | null; // FK to geographies
+  detected_at: string; // When AI detected the event
+
   created_at: string;
   updated_at: string;
+}
+
+export interface MarketEventWithRelations extends MarketEvent {
+  source?: Source;
+  segment_entity?: SegmentEntity;
+  geography_entity?: Geography;
 }
 
 export interface MarketEventFilter {
@@ -121,6 +240,8 @@ export type SearchType =
   | 'auctions'
   | 'general';
 
+export type SearchDepth = 'daily' | 'weekly' | 'monthly';
+
 export interface AIPrompt {
   id: string;
   name: string; // Unique name
@@ -130,8 +251,28 @@ export interface AIPrompt {
   is_active: boolean;
   parameters: PromptParameters; // Default parameters
   created_by: string; // User ID who created
+
+  // NEW FIELDS:
+  segment_id: string | null; // Специализация на определенный сегмент
+  geography_id: string | null; // Географическая специализация
+  search_depth: SearchDepth; // daily (акции), weekly (события), monthly (тренды)
+
   created_at: string;
   updated_at: string;
+}
+
+export interface AIPromptWithRelations extends AIPrompt {
+  segment?: SegmentEntity;
+  geography?: Geography;
+}
+
+/**
+ * Связь Many-to-Many между промптами и сегментами
+ */
+export interface PromptSegment {
+  prompt_id: string;
+  segment_id: string;
+  created_at: string;
 }
 
 export interface PromptParameters {

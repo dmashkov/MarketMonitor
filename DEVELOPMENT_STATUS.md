@@ -1,12 +1,12 @@
 # 📊 Development Status - MarketMonitor
 
-**Дата:** 2024-12-04
-**Версия:** 0.3.0
-**Статус:** ✅ Phase 1 Completed + ✅ Phase 2 MVP Complete + ✅ Phase 3 Stubs Ready
+**Дата:** 2024-12-05
+**Версия:** 0.4.0
+**Статус:** ✅ Phase 1-2 Complete + 🚀 Phase 3 Extended Planning (Database Ready)
 **AI Provider:** OpenAI API (GPT-4 / GPT-4o)
 **Deploy:** Netlify (Frontend Ready)
-**Architecture:** Modular (5 independent modules)
-**Last Commit:** de746af (fix: remove extra closing divs in EventsPage and ReportsPage)
+**Architecture:** Modular (5 independent modules + Source Management)
+**Last Major Update:** Extended architecture with sources, segments, geographies (Migrations 005-006)
 
 ---
 
@@ -137,79 +137,238 @@
 
 ---
 
-## 👥 Phase 3: Pages & Admin Features (IN PROGRESS ✅ STUBS)
+## 👥 Phase 3: Source Management & Specialized Prompts (🚀 IN PROGRESS)
 
-### Events Pages (✅ STUB CREATED, 🚀 READY TO IMPLEMENT)
-- ✅ EventsPage - страница со всеми событиями (stub, Phase 3 marked)
-  - ✅ Маршрут /events созданn
-  - ✅ Компонент создан с "Function in development" сообщением
-  - [ ] Интегрировать EventsTable компонент (✅ READY)
-  - [ ] Фильтры по категориям, статусу, датам
-  - [ ] Поиск по названию/описанию
-  - [ ] Экспорт в CSV/Excel
+**Сроки:** 2-3 недели | **Статус:** Database Ready ✅, Frontend Planning 🚀
 
-- [ ] EventDetailPage - полная информация о событии
-  - [ ] Детальная информация
-  - [ ] Комментарии (опционально)
-  - [ ] История изменений
+### 3.1 Database Schema (✅ COMPLETE - 2024-12-05)
 
-### Reports & Analytics (✅ STUB CREATED, 🚀 READY TO IMPLEMENT)
-- ✅ ReportsPage - генерация отчетов (stub, Phase 3 marked)
-  - ✅ Маршрут /reports создан
-  - ✅ Компонент создан с "Function in development" сообщением
-  - [ ] Интегрировать DateRange picker
-  - [ ] Экспорт в Excel, CSV
-  - [ ] AI Summary от OpenAI
+- ✅ **Migration 005:** sources_and_segments.sql
+  - ✅ Таблица `segments` - сегменты оборудования (RAC, VRF, Chiller, AHU, etc.)
+  - ✅ Таблица `geographies` - географические зоны (страна, регионы, города)
+  - ✅ Таблица `source_types` - типы источников (distributor, manufacturer, media, etc.)
+  - ✅ Таблица `sources` - источники для мониторинга (15+ записей)
+  - ✅ Таблица `source_urls` - конкретные URL для мониторинга
+  - ✅ Расширение `events` - добавлены: source_id, criticality_level, segment_id, geography_id, detected_at
+  - ✅ Расширение `ai_prompts` - добавлены: segment_id, geography_id, search_depth
+  - ✅ Таблица `prompt_segments` - связьMany-to-Many для промптов и сегментов
+  - ✅ RLS policies для всех таблиц
+  - ✅ Indexes для производительности
 
-- [ ] DashboardPage improvements
-  - [ ] Графики (Charts.js / Recharts)
-  - [ ] KPI cards
-  - [ ] Last 7 days тренды
+- ✅ **Migration 006:** seed_sources_data.sql
+  - ✅ 8 сегментов (RAC, VRF, Chiller, AHU, Промышленное, Тепловые насосы, Вентиляция, Холодильное)
+  - ✅ География РФ (страна, 7 федеральных округов, 4 крупных города)
+  - ✅ 6 типов источников
+  - ✅ 15 источников:
+    - Дистрибьюторы: Русклимат, Даичи, АЯК, Бриз
+    - Производители: MIDEA, GREE, HAIER, TCL, HISENSE
+    - СМИ: Forbes, Ведомости, Коммерсантъ, РБК
+    - Ассоциации: АВОК, АПИК
+  - ✅ 7+ конкретных URL для мониторинга
+  - ✅ 3 примера специализированных промптов (Daily/Weekly/Monthly)
 
-### Admin Features (✅ STUB CREATED, 🚀 READY TO IMPLEMENT)
-- ✅ AdminPanel - управление приложением (stub, Phase 3 marked)
-  - ✅ Маршрут /admin создан
-  - ✅ Компонент создан с 3 вкладками (Users, Prompts, Scheduler)
-  - ✅ Admin-only проверка (isAdmin guard)
-  - [ ] UserManagement - создание/удаление/редактирование пользователей
-  - [ ] PromptLibrary - CRUD промптов для поиска
-  - [ ] JobScheduler - управление расписаниями
-  - [ ] SystemSettings - конфигурация
+- ✅ **TypeScript типы обновлены:**
+  - ✅ `SegmentEntity`, `Geography`, `Source`, `SourceType`, `SourceUrl`
+  - ✅ `CriticalityLevel` (1-5), `SearchDepth` (daily/weekly/monthly)
+  - ✅ Расширены `MarketEvent`, `AIPrompt` с новыми полями
+  - ✅ Типы для связей: `MarketEventWithRelations`, `AIPromptWithRelations`, `SourceWithType`
 
-- [ ] Components
-  - [ ] UserManager компонент
-  - [ ] PromptEditor компонент
-  - [ ] CronBuilder UI
-  - [ ] SearchRunner для ручных поисков
+### 3.2 Backend: API Development (⏳ TODO)
+
+- [ ] **Edge Function: sources-api**
+  - [ ] GET /sources - список источников (фильтры, пагинация)
+  - [ ] GET /sources/:id - детали источника
+  - [ ] POST /sources - создать источник (admin only)
+  - [ ] PATCH /sources/:id - обновить источник
+  - [ ] DELETE /sources/:id - удалить источник
+
+- [ ] **Edge Function: source-urls-api**
+  - [ ] GET /source-urls?source_id=xxx - список URL
+  - [ ] POST /source-urls - добавить URL
+  - [ ] PATCH /source-urls/:id - обновить URL
+  - [ ] DELETE /source-urls/:id - удалить URL
+
+- [ ] **Edge Function: segments-api**
+  - [ ] GET /segments - список сегментов
+  - [ ] POST /segments - создать сегмент (admin only)
+
+- [ ] **Edge Function: geographies-api**
+  - [ ] GET /geographies - список географических зон
+  - [ ] GET /geographies/:id/children - дочерние зоны
+
+### 3.3 Frontend: Source Management UI (⏳ TODO)
+
+**Module:** `modules/admin/sources/`
+
+- [ ] **SourcesManager.tsx**
+  - [ ] Таблица всех источников
+  - [ ] Фильтры: type, active, frequency, priority
+  - [ ] Поиск по названию
+  - [ ] CRUD операции (admin only)
+
+- [ ] **SourceFormModal.tsx**
+  - [ ] Форма создания/редактирования источника
+  - [ ] Валидация через zod
+  - [ ] Все поля: name, type, website_url, telegram_channel, description, priority, frequency
+
+- [ ] **SourceUrlsManager.tsx**
+  - [ ] Управление конкретными URL внутри источника
+  - [ ] Типы URL: news, products, blog, press-release
+  - [ ] Добавление/удаление URL
+
+- [ ] **SourceTypeTag.tsx**
+  - [ ] Цветные badges для типов источников
+
+- [ ] **Hooks:**
+  - [ ] `useSources()` - React Query hook для источников
+  - [ ] `useSourceUrls()` - управление URL
+  - [ ] `useSegments()` - загрузка сегментов
+  - [ ] `useGeographies()` - загрузка географии
+
+- [ ] **Integration:**
+  - [ ] Добавить вкладку "Sources" в AdminPanel
+  - [ ] Admin-only routing
+
+### 3.4 Frontend: Specialized Prompts Library (⏳ TODO)
+
+**Module:** `modules/admin/prompts/` (расширение)
+
+- [ ] **PromptLibrary.tsx** (обновить)
+  - [ ] Фильтры: segment, geography, search_depth
+  - [ ] Группировка по глубине (Daily / Weekly / Monthly)
+  - [ ] Иконки для быстрой идентификации
+
+- [ ] **PromptFormModal.tsx** (обновить)
+  - [ ] Новые поля:
+    - segment_id (select из segments)
+    - geography_id (select из geographies)
+    - search_depth (daily/weekly/monthly)
+  - [ ] Multi-select для связи с несколькими сегментами
+
+- [ ] **PromptTemplates.tsx** (NEW)
+  - [ ] Библиотека готовых шаблонов:
+    - "Daily RAC Акции"
+    - "Weekly VRF Проекты"
+    - "Monthly Market Trends"
+    - "Chiller Tender Monitoring"
+    - "AHU Government Contracts"
+  - [ ] Кнопка "Использовать шаблон"
+
+### 3.5 Stub Pages Update (✅ PARTIAL READY)
+
+- ✅ EventsPage - stub создана (готова к интеграции EventsTable)
+- ✅ ReportsPage - stub создана (готова к DateRange picker + экспорт)
+- ✅ AdminPanel - stub с 3 вкладками (готова к добавлению Sources вкладки)
 
 ---
 
-## 🤖 Phase 4: Edge Functions & Automation (⏳ FUTURE)
+## 🎯 Phase 4: Event Criticality & Source Tracking (⏳ FUTURE)
 
-### Edge Functions (⏳ FUTURE)
-- [ ] ai-search - OpenAI поиск событий
-- [ ] ai-summarize - анализ и суммаризация
-- [ ] create-user - создание пользователей
-- [ ] execute-scheduled-job - запуск расписаний
-- [ ] export-report - генерация отчетов
+**Сроки:** 2 недели | **Статус:** Планирование 📋
 
-### GitHub Actions (⏳ FUTURE)
-- [ ] scheduled-search.yml - ежедневные поиски
-- [ ] deploy.yml - автоматический деплой
-- [ ] tests.yml - тестирование на PR
+### 4.1 Event Source Tracking
+- [ ] EventsTable - колонка "Источник" с ссылкой
+- [ ] EventDetailModal - полная информация о событии + источник
+- [ ] Фильтр по источникам и типу источника
+- [ ] История изменений события (audit log)
+
+### 4.2 Criticality Level System (5 уровней)
+- [ ] CriticalityBadge компонент (цветные badges)
+- [ ] CriticalityFilter для EventsTable
+- [ ] CriticalEventsWidget для Dashboard (4-5 уровень)
+- [ ] Алерты для новых критичных событий
+
+### 4.3 Auto-Criticality Detection (AI)
+- [ ] Edge Function: `ai-criticality-scorer`
+- [ ] Автоматическая оценка критичности через OpenAI
+- [ ] Обновление событий с AI-оценкой
+
+**См. ROADMAP.md для деталей**
+
+---
+
+## 📊 Phase 5: Multi-Depth Search System (⏳ FUTURE)
+
+**Сроки:** 2-3 недели | **Статус:** Планирование 📋
+
+### 5.1 Три уровня глубины
+- [ ] Daily поиски (ежедневно) - акции, спецпредложения
+- [ ] Weekly поиски (еженедельно) - контракты, соглашения, проекты
+- [ ] Monthly поиски (ежемесячно) - тренды, аналитика, обзоры рынка
+
+### 5.2 Scheduler Updates
+- [ ] Группировка по глубине в JobScheduler
+- [ ] Цветная маркировка (Daily🟢 / Weekly🔵 / Monthly🟣)
+- [ ] Шаблоны cron для каждого типа
+
+### 5.3 Search Run Analytics
+- [ ] SearchRunsHistory - история всех поисковых запусков
+- [ ] SearchDepthAnalytics - сравнение эффективности
+- [ ] Графики: события по глубине, критичность, источники
+
+**См. ROADMAP.md для деталей**
+
+---
+
+## 🔮 Phase 6: Data Analysis & Intelligence (⏳ FUTURE)
+
+**Сроки:** 3-4 недели | **Статус:** Концепция 💡
+
+### 6.1 Historical Data Analysis
+- [ ] TrendAnalyzer - анализ трендов за период
+- [ ] CompanyProfiler - профиль активности компании
+- [ ] MarketInsights - AI-генерированные инсайты
+
+### 6.2 AI-Powered Summarization
+- [ ] Edge Function: `ai-summarize-period`
+- [ ] AIReportGenerator - автоматические аналитические отчеты
+- [ ] Экспорт отчетов в PDF/DOCX
+
+### 6.3 Duplicate Detection & Merging
+- [ ] Edge Function: `detect-duplicates`
+- [ ] OpenAI Embeddings + Cosine Similarity
+- [ ] DuplicateMerger (admin tool) - объединение дубликатов
+
+**См. ROADMAP.md для деталей**
+
+---
+
+## 📱 Phase 7: Telegram Integration (⏳ FUTURE)
+
+**Сроки:** 1-2 недели | **Статус:** Концепция 💡
+
+### 7.1 Telegram Bot для мониторинга
+- [ ] Telegram Bot API интеграция
+- [ ] Webhook для новых сообщений из каналов
+- [ ] Автоматический парсинг и создание событий
+
+### 7.2 Admin Management
+- [ ] TelegramChannelManager - управление подключенными каналами
+- [ ] TelegramPostsViewer - просмотр и фильтрация постов
+
+**См. ROADMAP.md для деталей**
 
 ---
 
 ## 📊 Overall Progress
 
 ```
-Phase 1: Foundation       ████████████████████ 100% ✅
-Phase 2: MVP Auth+Events  ████████████████████ 100% ✅
-Phase 3: Pages & Admin    ██████░░░░░░░░░░░░░░  30% 🚀 (Stubs ready)
-Phase 4: Edge Functions   ░░░░░░░░░░░░░░░░░░░░   0% ⏳
+Phase 1: Foundation                   ████████████████████ 100% ✅
+Phase 2: MVP Auth+Events              ████████████████████ 100% ✅
+Phase 3: Source Management            ████████░░░░░░░░░░░░  40% 🚀 (DB ready)
+Phase 4: Criticality & Tracking       ░░░░░░░░░░░░░░░░░░░░   0% 📋
+Phase 5: Multi-Depth Search           ░░░░░░░░░░░░░░░░░░░░   0% 📋
+Phase 6: Data Analysis & AI           ░░░░░░░░░░░░░░░░░░░░   0% 💡
+Phase 7: Telegram Integration         ░░░░░░░░░░░░░░░░░░░░   0% 💡
 
-MVP OVERALL:              ████████░░░░░░░░░░░░ 40% 🚀
+EXTENDED MVP:             ████████░░░░░░░░░░░░ 40% 🚀
 ```
+
+**Легенда:**
+- ✅ Complete - Фаза полностью завершена
+- 🚀 In Progress - Активная разработка
+- 📋 Planning - Детальное планирование завершено
+- 💡 Concept - Концептуальная стадия
 
 ---
 
@@ -361,38 +520,97 @@ npm run dev
 
 ## 🎯 Рекомендуемые Следующие Шаги (Phase 3)
 
-### 🚀 Приоритет 1: EventsPage (2-3 часа)
-1. ✅ Stub page создана (`modules/events/pages/EventsPage.tsx`)
-2. ✅ Маршрут добавлен в App.tsx (`/events`)
-3. ✅ Навигация добавлена в AppLayout
-4. **👉 NEXT:** Интегрировать EventsTable компонент с реальными данными
-5. Добавить фильтры по категориям, статусу, датам
-6. Добавить поиск по названию/описанию
-7. Добавить экспорт в CSV/Excel
+### 🔥 Приоритет 1: Source Management Backend (1 неделя)
 
-### 🚀 Приоритет 2: ReportsPage (2-3 часа)
-1. ✅ Stub page создана (`modules/export/pages/ReportsPage.tsx`)
-2. ✅ Маршрут добавлен в App.tsx (`/reports`)
-3. ✅ Навигация добавлена в AppLayout
-4. **👉 NEXT:** Добавить DateRange picker
-5. Интегрировать экспорт в CSV/Excel
-6. Добавить OpenAI Summary (позже)
+**Цель:** Создать API для управления источниками
 
-### 🚀 Приоритет 3: AdminPanel (3-4 часа)
-1. ✅ Stub page создана с 3 вкладками (`modules/admin/pages/AdminPanel.tsx`)
-2. ✅ Маршрут добавлен в App.tsx (`/admin`)
-3. ✅ Навигация добавлена в AppLayout (админ-only)
-4. ✅ Admin guard проверка реализована
-5. **👉 NEXT:** UserManagement вкладка - список, создание, удаление
-6. PromptLibrary вкладка - CRUD промптов
-7. JobScheduler вкладка - управление расписаниями
+1. **Edge Function: sources-api** (2-3 дня)
+   - GET /sources - список с фильтрами
+   - POST /sources - создание (admin only)
+   - PATCH /sources/:id - редактирование
+   - DELETE /sources/:id - удаление
 
-### 📋 Техническое заданное
-- Все новые компоненты в папке модуля
-- Использовать useAuth hook для проверки ролей
-- Экспортировать через index.ts модуля
-- Добавить маршруты в App.tsx
-- Тестировать с Supabase данными
+2. **Edge Function: source-urls-api** (1 день)
+   - CRUD для конкретных URL
+
+3. **Edge Function: segments-api** (1 день)
+   - GET /segments - список сегментов
+   - POST /segments - создание (admin only)
+
+4. **Edge Function: geographies-api** (1 день)
+   - GET /geographies - список с фильтрами
+   - GET /geographies/:id/children - дочерние зоны
+
+5. **Тестирование API** (1 день)
+   - Postman/Insomnia коллекция
+   - Проверка RLS policies
+   - Проверка валидации
+
+### 🔥 Приоритет 2: Source Management UI (1 неделя)
+
+**Цель:** Admin интерфейс для управления источниками
+
+**Module:** `modules/admin/sources/`
+
+1. **SourcesManager.tsx** (2 дня)
+   - Таблица всех источников (Ant Design Table)
+   - Фильтры: type, active, frequency, priority
+   - Поиск по названию
+   - CRUD кнопки (admin only)
+
+2. **SourceFormModal.tsx** (1 день)
+   - Форма с валидацией (react-hook-form + zod)
+   - Поля: name, type, website_url, telegram, description, priority, frequency
+   - Создание/редактирование источника
+
+3. **SourceUrlsManager.tsx** (1 день)
+   - Управление URL внутри источника
+   - Добавление/удаление конкретных адресов
+
+4. **Hooks** (1 день)
+   - `useSources()` - React Query hook
+   - `useSourceUrls()` - управление URL
+   - `useSegments()` - загрузка сегментов
+   - `useGeographies()` - загрузка географии
+
+5. **Integration** (1 день)
+   - Добавить вкладку "Sources" в AdminPanel
+   - Тестирование полного flow
+
+### 🔥 Приоритет 3: Specialized Prompts Library (3-4 дня)
+
+**Цель:** Расширить PromptLibrary новыми полями
+
+**Module:** `modules/admin/prompts/` (расширение)
+
+1. **PromptLibrary.tsx** (обновить, 1 день)
+   - Фильтры: segment, geography, search_depth
+   - Группировка по глубине (Daily/Weekly/Monthly)
+   - Иконки для быстрой идентификации
+
+2. **PromptFormModal.tsx** (обновить, 1 день)
+   - Новые поля: segment_id, geography_id, search_depth
+   - Multi-select для связи с несколькими сегментами
+
+3. **PromptTemplates.tsx** (NEW, 1 день)
+   - Библиотека готовых шаблонов
+   - Кнопка "Использовать шаблон"
+
+4. **Тестирование** (1 день)
+   - Создание промптов с новыми полями
+   - Проверка связей segment/geography
+
+### 📋 Техническое задание
+- ✅ Database schema готова (migrations 005-006)
+- ✅ TypeScript типы обновлены
+- ⏳ Backend API (Edge Functions) - **следующий шаг**
+- ⏳ Frontend UI (Source Management) - после Backend
+- ⏳ Specialized Prompts - после Source Management
+
+### 💡 После Phase 3
+- Phase 4: Criticality System + Event Source Tracking
+- Phase 5: Multi-Depth Search (Daily/Weekly/Monthly)
+- Phase 6: Data Analysis & AI Summarization
 
 ### 📚 Для Frontend разработчика
 1. ✅ Запусти `npm install && npm run dev` (уже готово)

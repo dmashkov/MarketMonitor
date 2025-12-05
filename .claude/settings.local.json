@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: add stub pages for incomplete features (Phase 3)\n\n- EventsPage: list events with filters, search, export (marked Phase 3)\n- ReportsPage: generate reports with CSV/Excel export options (marked Phase 3)\n- AdminPanel: manage users, prompts, scheduler with admin-only access (marked Phase 3)\n- Updated App.tsx with /events, /reports, /admin routes wrapped with ProtectedRoute\n- Updated AppLayout navigation to show all menu items including admin panel link (admin only)\n- Created module index.ts exports for events, export, and admin modules\n- All Phase 3 pages display clear \"in development\" messaging to distinguish from broken links\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: remove duplicate AppLayout wrapper from stub pages\n\n- EventsPage, ReportsPage, and AdminPanel were wrapped in AppLayout twice\n- App.tsx already wraps routes with AppLayout, so pages shouldn''t include it\n- Removed AppLayout import and wrapper from all three stub pages\n- This fixes the duplicate menu that appeared when navigating to these routes\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(supabase --version:*)",
+      "Bash(npm install:*)",
+      "Bash(scoop --version:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git restore:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

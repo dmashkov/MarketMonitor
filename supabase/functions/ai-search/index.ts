@@ -152,8 +152,10 @@ function createSearchPrompt(params: SearchRunParams): string {
 - 4: Важное событие
 - 5: Критическое событие (влияет на весь рынок)
 
-ФОРМАТ ОТВЕТА: JSON массив событий (от 5 до 15 событий):
-```json
+ФОРМАТ ОТВЕТА: JSON массив событий (от 5 до 15 событий).
+Верни только валидный JSON массив, можно обернуть в markdown блок.
+
+Пример структуры:
 [
   {
     "date": "YYYY-MM-DD",
@@ -167,7 +169,6 @@ function createSearchPrompt(params: SearchRunParams): string {
     "source_url": "URL источника или null"
   }
 ]
-```
 
 ТРЕБОВАНИЯ:
 - **ОБЯЗАТЕЛЬНО используй web search для поиска актуальных новостей!**
@@ -176,7 +177,7 @@ function createSearchPrompt(params: SearchRunParams): string {
 - Описание на русском языке
 - Дата в формате YYYY-MM-DD
 - Минимум 5 событий, максимум 15
-- Верни валидный JSON массив в markdown блоке ```json
+- Верни только JSON массив (можно в markdown блоке)
 
 **ВАЖНО: Каждое событие ДОЛЖНО иметь реальную ссылку source_url на источник!**`;
 }

@@ -32,9 +32,21 @@ function createSearchPrompt(params: SearchRunParams): string {
     ? `\nТипы событий: ${params.event_types.join(', ')}`
     : '';
 
-  return `Ты - аналитик рынка климатического оборудования в России.
+  return `Ты - аналитический AI для мониторинга климатического рынка России.
 
-ЗАДАЧА: Найди последние новости и события на климатическом рынке России за последние ${days} дней (с ${new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} по ${today}).${segmentsFilter}${eventTypesFilter}
+**КРИТИЧЕСКИ ВАЖНО: ИСПОЛЬЗУЙ WEB SEARCH для поиска РЕАЛЬНЫХ актуальных новостей!**
+
+ЗАДАЧА: Найди последние РЕАЛЬНЫЕ новости и события на климатическом рынке России за последние ${days} дней (с ${new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} по ${today}).${segmentsFilter}${eventTypesFilter}
+
+ИСТОЧНИКИ для поиска (обязательно используй web search):
+- https://rusclimate.ru/ (новости дистрибьютора)
+- https://www.avok.ru/ (отраслевые новости)
+- https://www.kommersant.ru/ (бизнес новости)
+- https://www.vedomosti.ru/ (деловые новости)
+- https://rbc.ru/ (рыночные новости)
+- https://www.midea.ru/ (производитель)
+- https://www.gree.ru/ (производитель)
+- Telegram каналы климатической отрасли
 
 СЕГМЕНТЫ РЫНКА:
 - кондиционеры (бытовые, полупромышленные)
@@ -83,11 +95,15 @@ function createSearchPrompt(params: SearchRunParams): string {
 ]
 
 ТРЕБОВАНИЯ:
+- **ОБЯЗАТЕЛЬНО используй web search для поиска актуальных новостей!**
 - Только РЕАЛЬНЫЕ события из открытых источников
+- **source_url ОБЯЗАТЕЛЕН - ссылка на источник новости**
 - Описание на русском языке
 - Дата в формате YYYY-MM-DD
 - Минимум 5 событий, максимум 15
 - Только валидный JSON (без комментариев, без markdown)
+
+**ВАЖНО: Каждое событие ДОЛЖНО иметь реальную ссылку source_url на источник!**
 
 Верни ТОЛЬКО JSON массив, без дополнительного текста.`;
 }
@@ -114,10 +130,12 @@ async function searchWithOpenAI(prompt: string): Promise<MarketEvent[]> {
       'Authorization': `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o', // GPT-4o for better performance
+      model: 'gpt-4o', // GPT-4o with web search capability
       messages,
       temperature: 0.7,
       max_tokens: 4000,
+      // Enable web search (if available in your OpenAI tier)
+      tools: [{ type: 'web_search' }], // Request web search tool
     }),
   });
 

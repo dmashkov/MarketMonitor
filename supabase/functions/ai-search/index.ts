@@ -208,7 +208,6 @@ async function searchWithOpenAI(prompt: string): Promise<MarketEvent[]> {
     body: JSON.stringify({
       model: 'gpt-4o-search-preview', // GPT-4o with web search capability
       messages,
-      temperature: 0.7,
       max_tokens: 4000,
       response_format: { type: 'json_object' }, // Force valid JSON response
     }),

@@ -152,22 +152,22 @@ function createSearchPrompt(params: SearchRunParams): string {
 - 4: Важное событие
 - 5: Критическое событие (влияет на весь рынок)
 
-ФОРМАТ ОТВЕТА: JSON объект с массивом событий (от 5 до 15 событий):
-{
-  "events": [
-    {
-      "date": "YYYY-MM-DD",
-      "segment": "один из сегментов выше",
-      "geography": "город/регион или null",
-      "channel": "B2B | B2G | B2C или null",
-      "event_type": "один из типов событий выше",
-      "company": "название компании или null",
-      "description": "краткое описание события (1-2 предложения)",
-      "criticality": 1-5,
-      "source_url": "URL источника или null"
-    }
-  ]
-}
+ФОРМАТ ОТВЕТА: JSON массив событий (от 5 до 15 событий):
+```json
+[
+  {
+    "date": "YYYY-MM-DD",
+    "segment": "один из сегментов выше",
+    "geography": "город/регион или null",
+    "channel": "B2B | B2G | B2C или null",
+    "event_type": "один из типов событий выше",
+    "company": "название компании или null",
+    "description": "краткое описание события (1-2 предложения)",
+    "criticality": 1-5,
+    "source_url": "URL источника или null"
+  }
+]
+```
 
 ТРЕБОВАНИЯ:
 - **ОБЯЗАТЕЛЬНО используй web search для поиска актуальных новостей!**
@@ -176,12 +176,9 @@ function createSearchPrompt(params: SearchRunParams): string {
 - Описание на русском языке
 - Дата в формате YYYY-MM-DD
 - Минимум 5 событий, максимум 15
-- Только валидный JSON (без комментариев, без markdown)
-- Верни JSON объект с полем "events"
+- Верни валидный JSON массив в markdown блоке ```json
 
-**ВАЖНО: Каждое событие ДОЛЖНО иметь реальную ссылку source_url на источник!**
-
-Верни ТОЛЬКО JSON объект { "events": [...] }, без дополнительного текста.`;
+**ВАЖНО: Каждое событие ДОЛЖНО иметь реальную ссылку source_url на источник!**`;
 }
 
 /**
@@ -209,7 +206,7 @@ async function searchWithOpenAI(prompt: string): Promise<MarketEvent[]> {
       model: 'gpt-4o-search-preview', // GPT-4o with web search capability
       messages,
       max_tokens: 4000,
-      response_format: { type: 'json_object' }, // Force valid JSON response
+      // Note: response_format not supported with web_search
     }),
   });
 

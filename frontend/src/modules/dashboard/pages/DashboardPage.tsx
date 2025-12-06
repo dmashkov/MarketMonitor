@@ -80,24 +80,11 @@ export const DashboardPage: React.FC = () => {
         </Row>
 
         {/* AI Search Panel */}
-        {import.meta.env.VITE_OPENAI_API_KEY ? (
-          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            <Col xs={24}>
-              <AISearchPanel />
-            </Col>
-          </Row>
-        ) : (
-          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            <Col xs={24}>
-              <Alert
-                message="AI Search недоступен"
-                description="Для использования AI поиска необходимо настроить VITE_OPENAI_API_KEY в переменных окружения."
-                type="warning"
-                showIcon
-              />
-            </Col>
-          </Row>
-        )}
+        <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+          <Col xs={24}>
+            <AISearchPanel />
+          </Col>
+        </Row>
 
         {/* Основной контент */}
         <Row gutter={[16, 16]}>

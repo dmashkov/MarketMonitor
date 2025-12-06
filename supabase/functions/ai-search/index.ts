@@ -1,8 +1,81 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createSupabaseClient } from '../_shared/supabaseClient.ts';
-import type { MarketEvent, SearchRunParams, SearchRunResult } from '../_shared/types.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type EventType =
+  | 'акция'
+  | 'цены'
+  | 'условия_оплаты'
+  | 'pr'
+  | 'тендер'
+  | 'соглашение'
+  | 'регулирование'
+  | 'маркетплейс';
+
+type Channel = 'B2B' | 'B2G' | 'B2C';
+
+type Segment =
+  | 'кондиционеры'
+  | 'техника'
+  | 'мультизональные_системы'
+  | 'вентиляция'
+  | 'тепловое_оборудование'
+  | 'iot'
+  | 'услуги';
+
+interface MarketEvent {
+  date: string; // ISO date (YYYY-MM-DD)
+  segment: Segment;
+  geography: string | null;
+  channel: Channel | null;
+  event_type: EventType;
+  company: string | null;
+  description: string;
+  criticality: number; // 1-5
+  source_url: string | null;
+}
+
+interface SearchRunParams {
+  days?: number; // How many days back to search (default: 7)
+  segments?: Segment[]; // Filter by segments (optional)
+  event_types?: EventType[]; // Filter by event types (optional)
+}
+
+interface SearchRunResult {
+  search_run_id: string;
+  status: 'completed' | 'failed';
+  events_found: number;
+  events: MarketEvent[];
+  error_message?: string;
+  execution_time_seconds: number;
+}
+
+// ============================================================================
+// ENVIRONMENT VARIABLES
+// ============================================================================
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Create Supabase client for Edge Functions
+ */
+function createSupabaseClient() {
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
 
 interface OpenAIMessage {
   role: 'system' | 'user' | 'assistant';

@@ -381,6 +381,7 @@ INSERT INTO public.ai_prompts (
   prompt_template,
   search_type,
   is_active,
+  segment_id,
   search_depth
 )
 SELECT

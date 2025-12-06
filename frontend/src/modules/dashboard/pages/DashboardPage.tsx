@@ -5,9 +5,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Card, Statistic, Row, Col, Spin, Empty } from 'antd';
+import { Layout, Card, Statistic, Row, Col, Spin, Empty, Alert } from 'antd';
 import { AreaChartOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import useAuth from '../../auth/hooks/useAuth';
+import { AISearchPanel } from '../components/AISearchPanel';
 
 const { Content } = Layout;
 
@@ -77,6 +78,26 @@ export const DashboardPage: React.FC = () => {
             </Card>
           </Col>
         </Row>
+
+        {/* AI Search Panel */}
+        {import.meta.env.VITE_OPENAI_API_KEY ? (
+          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+            <Col xs={24}>
+              <AISearchPanel />
+            </Col>
+          </Row>
+        ) : (
+          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+            <Col xs={24}>
+              <Alert
+                message="AI Search недоступен"
+                description="Для использования AI поиска необходимо настроить VITE_OPENAI_API_KEY в переменных окружения."
+                type="warning"
+                showIcon
+              />
+            </Col>
+          </Row>
+        )}
 
         {/* Основной контент */}
         <Row gutter={[16, 16]}>

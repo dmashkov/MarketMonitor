@@ -207,6 +207,7 @@ async function searchWithOpenAI(prompt: string): Promise<MarketEvent[]> {
       messages,
       temperature: 0.7,
       max_tokens: 4000,
+      response_format: { type: 'json_object' }, // Force valid JSON response
       // Enable web search (if available in your OpenAI tier)
       tools: [{ type: 'web_search' }], // Request web search tool
     }),

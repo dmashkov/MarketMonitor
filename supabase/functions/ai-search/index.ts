@@ -206,7 +206,7 @@ async function searchWithOpenAI(prompt: string): Promise<MarketEvent[]> {
       'Authorization': `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o', // GPT-4o with web search capability
+      model: 'gpt-4o-search-preview', // GPT-4o with web search capability
       messages,
       temperature: 0.7,
       max_tokens: 4000,

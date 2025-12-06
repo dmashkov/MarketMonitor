@@ -212,6 +212,18 @@ export const AISearchPanel: React.FC = () => {
                         Критичность: {event.criticality}/5
                         {event.geography && ` • ${event.geography}`}
                       </div>
+                      {event.source_url && (
+                        <div style={{ marginTop: '4px' }}>
+                          <a
+                            href={event.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ fontSize: '12px', color: '#1890ff' }}
+                          >
+                            📎 Открыть источник →
+                          </a>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </Space>

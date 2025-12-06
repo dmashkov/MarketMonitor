@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Layout, Card, Statistic, Row, Col, Spin, Empty, Alert } from 'antd';
+import { Layout, Card, Statistic, Row, Col, Spin, Empty } from 'antd';
 import { AreaChartOutlined, FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import useAuth from '../../auth/hooks/useAuth';
 import { AISearchPanel } from '../components/AISearchPanel';

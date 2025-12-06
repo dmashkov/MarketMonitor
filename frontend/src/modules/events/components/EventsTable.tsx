@@ -60,41 +60,10 @@ export const EventsTable: React.FC<EventsTableProps> = () => {
 
   const columns: TableProps<MarketEvent>['columns'] = [
     {
-      title: 'Название',
-      dataIndex: 'title',
-      key: 'title',
-      width: '25%',
-      ellipsis: true,
-    },
-    {
-      title: 'Категория',
-      dataIndex: 'category',
-      key: 'category',
-      width: '15%',
-      render: (category: string) => (
-        <Tag color="blue">{category}</Tag>
-      ),
-    },
-    {
-      title: 'Статус',
-      dataIndex: 'status',
-      key: 'status',
-      width: '15%',
-      render: (status: string) => {
-        const colors: Record<string, string> = {
-          'new': 'green',
-          'processing': 'orange',
-          'completed': 'cyan',
-          'archived': 'default',
-        };
-        return <Tag color={colors[status] || 'default'}>{status}</Tag>;
-      },
-    },
-    {
-      title: 'Дата создания',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      width: '15%',
+      title: 'Дата',
+      dataIndex: 'date',
+      key: 'date',
+      width: '10%',
       render: (date: string) => {
         return new Date(date).toLocaleDateString('ru-RU', {
           year: 'numeric',
@@ -102,6 +71,63 @@ export const EventsTable: React.FC<EventsTableProps> = () => {
           day: 'numeric',
         });
       },
+    },
+    {
+      title: 'Компания',
+      dataIndex: 'company',
+      key: 'company',
+      width: '15%',
+      render: (company: string | null) => company || '-',
+    },
+    {
+      title: 'Тип события',
+      dataIndex: 'event_type',
+      key: 'event_type',
+      width: '12%',
+      render: (eventType: string) => (
+        <Tag color="blue">{eventType}</Tag>
+      ),
+    },
+    {
+      title: 'Сегмент',
+      dataIndex: 'segment',
+      key: 'segment',
+      width: '12%',
+      render: (segment: string) => (
+        <Tag color="green">{segment}</Tag>
+      ),
+    },
+    {
+      title: 'Описание',
+      dataIndex: 'description',
+      key: 'description',
+      width: '25%',
+      ellipsis: true,
+    },
+    {
+      title: 'Критичность',
+      dataIndex: 'criticality',
+      key: 'criticality',
+      width: '10%',
+      render: (criticality: number) => (
+        <Tag color={criticality >= 4 ? 'red' : criticality >= 3 ? 'orange' : 'default'}>
+          {criticality}/5
+        </Tag>
+      ),
+    },
+    {
+      title: 'Источник',
+      dataIndex: 'source_url',
+      key: 'source_url',
+      width: '10%',
+      render: (url: string | null) =>
+        url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            📎 Открыть
+          </a>
+        ) : (
+          '-'
+        ),
     },
     {
       title: 'Действия',

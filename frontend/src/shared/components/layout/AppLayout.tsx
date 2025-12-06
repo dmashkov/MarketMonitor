@@ -157,7 +157,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <Dropdown menu={{ items: userMenu }} placement="bottomRight">
             <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Avatar icon={<UserOutlined />} />
-              <span className="hidden sm:inline">{user?.user_metadata?.full_name || 'Пользователь'}</span>
+              <span className="hidden sm:inline">{user?.full_name || 'Пользователь'}</span>
             </div>
           </Dropdown>
         </Header>

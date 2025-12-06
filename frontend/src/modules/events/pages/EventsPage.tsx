@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Card, Empty, Tag, Button, Space } from 'antd';
+import { Card, Empty, Tag, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 /**

@@ -1,0 +1,103 @@
+# ============================================================================
+# Netlify Configuration для MarketMonitor
+# ============================================================================
+# Документация: https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  # Команда сборки
+  command = "cd frontend && npm install && npm run build"
+
+  # Директория с результатом сборки
+  publish = "frontend/dist"
+
+  # Node.js версия
+  [build.environment]
+    NODE_VERSION = "18"
+
+# ============================================================================
+# REDIRECTS - React Router SPA Support
+# ============================================================================
+# Все запросы перенаправляются на index.html для client-side routing
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ============================================================================
+# HEADERS - Security & Performance
+# ============================================================================
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Security headers
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Content Security Policy (базовая версия)
+    # TODO: настроить более строгую после тестирования
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.openai.com;"
+
+# Cache для статических assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache для index.html (не кешировать)
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ============================================================================
+# ENVIRONMENT VARIABLES (Настраивать через Netlify UI)
+# ============================================================================
+# После деплоя настроить в: Site settings > Environment variables
+#
+# Обязательные переменные:
+# - VITE_SUPABASE_URL
+# - VITE_SUPABASE_ANON_KEY
+# - VITE_APP_ENV=staging
+#
+# Опциональные:
+# - VITE_ENABLE_ANALYTICS=false
+# - VITE_ENABLE_SENTRY=false
+# - VITE_DEBUG=false
+
+# ============================================================================
+# FUNCTIONS (для будущего, если понадобятся Netlify Functions)
+# ============================================================================
+# [functions]
+#   directory = "netlify/functions"
+
+# ============================================================================
+# DEPLOY CONTEXTS
+# ============================================================================
+
+# Production deploy
+[context.production]
+  command = "cd frontend && npm install && npm run build"
+  [context.production.environment]
+    VITE_APP_ENV = "production"
+
+# Branch deploys (для feature branches)
+[context.branch-deploy]
+  command = "cd frontend && npm install && npm run build"
+  [context.branch-deploy.environment]
+    VITE_APP_ENV = "staging"
+
+# Deploy previews (для pull requests)
+[context.deploy-preview]
+  command = "cd frontend && npm install && npm run build"
+  [context.deploy-preview.environment]
+    VITE_APP_ENV = "preview"
+
+# ============================================================================
+# PLUGINS (опционально)
+# ============================================================================
+# [[plugins]]
+#   package = "@netlify/plugin-lighthouse"

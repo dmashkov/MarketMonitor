@@ -42,7 +42,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <Content style={{ padding: '24px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '32px' }}>Добро пожаловать, {user?.user_metadata?.full_name || 'Пользователь'}!</h1>
+        <h1 style={{ marginBottom: '32px' }}>Добро пожаловать, {user?.full_name || 'Пользователь'}!</h1>
 
         {/* Статистика */}
         <Row gutter={[16, 16]} style={{ marginBottom: '32px' }}>

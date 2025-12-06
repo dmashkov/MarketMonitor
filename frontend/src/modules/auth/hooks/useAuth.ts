@@ -142,10 +142,10 @@ export const useAuth = (): AuthContextType => {
   });
 
   // Derive computed properties
-  const session = sessionQuery.data;
-  const user = profileQuery.data;
-  const isAdmin: boolean = user?.role === 'admin' ?? false;
-  const isActive: boolean = user?.is_active ?? false;
+  const session = sessionQuery.data ?? null;
+  const user = profileQuery.data ?? null;
+  const isAdmin: boolean = user !== null && user.role === 'admin';
+  const isActive: boolean = user !== null && user.is_active;
 
   const isLoading: boolean = sessionQuery.isLoading || profileQuery.isLoading;
 

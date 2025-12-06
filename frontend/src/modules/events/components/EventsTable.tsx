@@ -7,18 +7,20 @@
 import React, { useState } from 'react';
 import { Table, Button, Space, Tag, Empty, Spin, Modal, message } from 'antd';
 import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
-import type { TableProps, ModalProps } from 'antd';
+import type { TableProps } from 'antd';
 import type { MarketEvent } from '../../../shared/types';
 import { useEventsList, useDeleteEvent } from '../hooks/useEvents';
 
 interface EventsTableProps {
+  // Reserved for future use
   onEdit?: (event: MarketEvent) => void;
 }
 
 /**
  * Компонент таблицы событий
  */
-export const EventsTable: React.FC<EventsTableProps> = ({ onEdit }) => {
+export const EventsTable: React.FC<EventsTableProps> = () => {
+  // onEdit reserved for future use
   const [selectedEvent, setSelectedEvent] = useState<MarketEvent | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -163,24 +165,26 @@ export const EventsTable: React.FC<EventsTableProps> = ({ onEdit }) => {
         {selectedEvent && (
           <div>
             <p>
-              <strong>Название:</strong> {selectedEvent.title}
+              <strong>Компания:</strong> {selectedEvent.company || 'Не указана'}
             </p>
             <p>
-              <strong>Категория:</strong> <Tag color="blue">{selectedEvent.category}</Tag>
+              <strong>Тип события:</strong> <Tag color="blue">{selectedEvent.event_type}</Tag>
             </p>
             <p>
-              <strong>Статус:</strong> <Tag>{selectedEvent.status}</Tag>
+              <strong>Дата:</strong> {new Date(selectedEvent.date).toLocaleDateString('ru-RU')}
             </p>
             <p>
               <strong>Описание:</strong>
             </p>
             <p>{selectedEvent.description}</p>
-            <p>
-              <strong>Ссылка:</strong>{' '}
-              <a href={selectedEvent.source_url} target="_blank" rel="noopener noreferrer">
-                {selectedEvent.source_url}
-              </a>
-            </p>
+            {selectedEvent.source_url && (
+              <p>
+                <strong>Ссылка:</strong>{' '}
+                <a href={selectedEvent.source_url} target="_blank" rel="noopener noreferrer">
+                  {selectedEvent.source_url}
+                </a>
+              </p>
+            )}
             <p>
               <strong>Дата создания:</strong>{' '}
               {new Date(selectedEvent.created_at).toLocaleString('ru-RU')}
@@ -202,7 +206,7 @@ export const EventsTable: React.FC<EventsTableProps> = ({ onEdit }) => {
       >
         <p>Вы уверены, что хотите удалить это событие?</p>
         <p>
-          <strong>{selectedEvent?.title}</strong>
+          <strong>{selectedEvent?.company || selectedEvent?.description.substring(0, 50)}</strong>
         </p>
       </Modal>
     </>

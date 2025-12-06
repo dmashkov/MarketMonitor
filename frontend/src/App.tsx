@@ -4,7 +4,7 @@
  * Обработка маршрутизации, аутентификации и глобального управления состоянием
  */
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Импорт компонентов аутентификации

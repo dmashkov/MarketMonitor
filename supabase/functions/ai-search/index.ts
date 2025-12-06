@@ -152,20 +152,22 @@ function createSearchPrompt(params: SearchRunParams): string {
 - 4: Важное событие
 - 5: Критическое событие (влияет на весь рынок)
 
-ФОРМАТ ОТВЕТА: JSON массив событий (от 5 до 15 событий):
-[
-  {
-    "date": "YYYY-MM-DD",
-    "segment": "один из сегментов выше",
-    "geography": "город/регион или null",
-    "channel": "B2B | B2G | B2C или null",
-    "event_type": "один из типов событий выше",
-    "company": "название компании или null",
-    "description": "краткое описание события (1-2 предложения)",
-    "criticality": 1-5,
-    "source_url": "URL источника или null"
-  }
-]
+ФОРМАТ ОТВЕТА: JSON объект с массивом событий (от 5 до 15 событий):
+{
+  "events": [
+    {
+      "date": "YYYY-MM-DD",
+      "segment": "один из сегментов выше",
+      "geography": "город/регион или null",
+      "channel": "B2B | B2G | B2C или null",
+      "event_type": "один из типов событий выше",
+      "company": "название компании или null",
+      "description": "краткое описание события (1-2 предложения)",
+      "criticality": 1-5,
+      "source_url": "URL источника или null"
+    }
+  ]
+}
 
 ТРЕБОВАНИЯ:
 - **ОБЯЗАТЕЛЬНО используй web search для поиска актуальных новостей!**
@@ -175,10 +177,11 @@ function createSearchPrompt(params: SearchRunParams): string {
 - Дата в формате YYYY-MM-DD
 - Минимум 5 событий, максимум 15
 - Только валидный JSON (без комментариев, без markdown)
+- Верни JSON объект с полем "events"
 
 **ВАЖНО: Каждое событие ДОЛЖНО иметь реальную ссылку source_url на источник!**
 
-Верни ТОЛЬКО JSON массив, без дополнительного текста.`;
+Верни ТОЛЬКО JSON объект { "events": [...] }, без дополнительного текста.`;
 }
 
 /**
@@ -231,7 +234,20 @@ async function searchWithOpenAI(prompt: string): Promise<MarketEvent[]> {
     .trim();
 
   try {
-    const events: MarketEvent[] = JSON.parse(jsonContent);
+    const parsed = JSON.parse(jsonContent);
+
+    // Handle both array format and object format
+    // With response_format: { type: 'json_object' }, OpenAI returns { "events": [...] }
+    let events: MarketEvent[];
+
+    if (Array.isArray(parsed)) {
+      events = parsed;
+    } else if (parsed.events && Array.isArray(parsed.events)) {
+      events = parsed.events;
+    } else {
+      throw new Error('Response does not contain events array');
+    }
+
     return events;
   } catch (error) {
     console.error('Failed to parse OpenAI response:', content);

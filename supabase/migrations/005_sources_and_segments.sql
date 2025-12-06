@@ -239,7 +239,7 @@ CREATE POLICY "Segments manageable by admins" ON public.segments
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM public.user_profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 
@@ -251,7 +251,7 @@ CREATE POLICY "Geographies manageable by admins" ON public.geographies
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM public.user_profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 
@@ -267,7 +267,7 @@ CREATE POLICY "Sources manageable by admins" ON public.sources
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM public.user_profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 
@@ -279,7 +279,7 @@ CREATE POLICY "Source URLs manageable by admins" ON public.source_urls
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM public.user_profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );
 
@@ -291,6 +291,6 @@ CREATE POLICY "Prompt segments manageable by admins" ON public.prompt_segments
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM public.user_profiles
-      WHERE user_id = auth.uid() AND role = 'admin'
+      WHERE id = auth.uid() AND role = 'admin'
     )
   );

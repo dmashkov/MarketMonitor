@@ -342,8 +342,8 @@ ON CONFLICT DO NOTHING;
 -- Daily: RAC сегмент - акции и спецпредложения
 INSERT INTO public.ai_prompts (
   name,
-  prompt_text,
-  category,
+  prompt_template,
+  search_type,
   is_active,
   segment_id,
   search_depth
@@ -360,8 +360,8 @@ ON CONFLICT DO NOTHING;
 -- Weekly: VRF сегмент - проекты и контракты
 INSERT INTO public.ai_prompts (
   name,
-  prompt_text,
-  category,
+  prompt_template,
+  search_type,
   is_active,
   segment_id,
   search_depth
@@ -378,8 +378,8 @@ ON CONFLICT DO NOTHING;
 -- Monthly: Общий рынок - тренды и аналитика
 INSERT INTO public.ai_prompts (
   name,
-  prompt_text,
-  category,
+  prompt_template,
+  search_type,
   is_active,
   search_depth
 )

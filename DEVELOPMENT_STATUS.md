@@ -1,12 +1,22 @@
 # 📊 Development Status - MarketMonitor
 
 **Дата:** 2024-12-07
-**Версия:** 0.4.1
-**Статус:** ✅ Phase 1-2 Complete + 🚀 Phase 3 In Progress (40% - Migrations ready, API created)
-**AI Provider:** OpenAI API (gpt-4o-search-preview - Web Search Working! ✅)
-**Deploy:** Netlify (Frontend + AI Search deployed and working)
-**Architecture:** Modular (5 independent modules + Source Management)
-**Last Major Update:** AI Search with web search working! Migrations 005-006 fixed and ready to apply (2024-12-07)
+**Версия:** 0.5.0
+**Статус:** ✅ Phase 1-2 Complete + 🚀 Phase 3 In Progress (50% - New Architecture Defined)
+**AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini + text-embedding-3-small)
+**Deploy:** Netlify (Frontend)
+**Architecture:** Multi-Agent System (8 specialized agents) + Document Storage
+**Last Major Update:** AI Agents Architecture 2.0 documented! Migration to multi-agent pipeline (2024-12-07)
+
+---
+
+## 🤖 НОВАЯ АРХИТЕКТУРА: AI Agents 2.0
+
+**Парадигмальный сдвиг:**
+- ❌ **Было:** Daily/Weekly/Monthly промпты ищут данные каждый раз → дубликаты, нет истории
+- ✅ **Стало:** Daily Search собирает данные → Documents DB → Reports генерируют аналитику
+
+**См. полное описание:** [AI_AGENTS_ARCHITECTURE.md](AI_AGENTS_ARCHITECTURE.md)
 
 ---
 
@@ -137,9 +147,22 @@
 
 ---
 
-## 👥 Phase 3: Source Management & Specialized Prompts (🚀 IN PROGRESS)
+## 👥 Phase 3: AI Agents Architecture + Admin Panel (🚀 IN PROGRESS)
 
-**Сроки:** 2-3 недели | **Статус:** Database Ready ✅, Frontend Planning 🚀
+**Сроки:** 3-4 недели | **Статус:** Architecture Documented ✅, Implementation Starting 🚀
+
+### 3.0 Новые таблицы (🆕 2024-12-07)
+
+- 🆕 **brands** - справочник брендов (Daikin, Midea, Haier, Ballu, etc.)
+- 🆕 **brand_segments** - связь брендов с сегментами (Many-to-Many)
+- 🆕 **documents** - полное хранение контента:
+  - PDF/PPTX файлы → Supabase Storage
+  - HTML → content_html в БД
+  - Текст → content_text (для FTS поиска)
+  - Embeddings → vector(1536) для семантического поиска
+- 🆕 **reports** - сохраненные отчеты (daily/weekly/monthly)
+- 🆕 **custom_prompts** - кастомные запросы пользователей
+- 🔄 **events** - обновлены поля (brand_id, document_id, criticality_reasoning)
 
 ### 3.1 Database Schema (✅ COMPLETE - 2024-12-05)
 
@@ -173,7 +196,49 @@
   - ✅ Расширены `MarketEvent`, `AIPrompt` с новыми полями
   - ✅ Типы для связей: `MarketEventWithRelations`, `AIPromptWithRelations`, `SourceWithType`
 
-### 3.2 Backend: API Development (⏳ TODO)
+### 3.2 AI Agents Pipeline (⏳ TODO - NEW!)
+
+**Архитектура:** 8 специализированных агентов
+
+```
+Orchestrator → Source Hunter → Content Fetcher → Document Processor →
+→ Event Extractor → Criticality Scorer → Duplicate Detector → Alert Manager
+```
+
+- [ ] **Agent 1: Source Hunter** - определяет где искать (2 сек)
+- [ ] **Agent 2: Content Fetcher** - загружает контент (15 сек)
+- [ ] **Agent 3: Document Processor** - сохраняет в Storage + БД (30 сек)
+  - [ ] Supabase Storage setup для PDF/PPTX
+  - [ ] Embeddings generation (OpenAI text-embedding-3-small)
+  - [ ] Mentions extraction (brands, segments, geographies)
+- [ ] **Agent 4: Event Extractor** - извлекает события (40 сек)
+- [ ] **Agent 5: Embedding Generator** - векторизация (встроен в Agent 3)
+- [ ] **Agent 6: Criticality Scorer** - оценка критичности 1-5 (10 сек)
+- [ ] **Agent 7: Duplicate Detector** - находит дубли через cosine similarity (15 сек)
+- [ ] **Agent 8: Alert Manager** - уведомления (Telegram + Email)
+
+**Дополнительно:**
+- [ ] **Report Generator** - создание отчетов из БД (daily/weekly/monthly)
+- [ ] **Custom Prompt Runner** - выполнение кастомных запросов
+
+**Метрики:**
+- Время: ~120 сек на 1 промпт
+- Стоимость: ~$0.50-1.00/день (~$15-30/месяц)
+
+### 3.3 Backend: API Development (⏳ TODO)
+
+- [ ] **Edge Function: brands-api** 🆕
+  - [ ] GET /brands - список брендов
+  - [ ] POST /brands - создать бренд (admin only)
+  - [ ] PATCH /brands/:id - обновить
+  - [ ] DELETE /brands/:id - удалить
+
+- [ ] **Edge Function: documents-api** 🆕
+  - [ ] GET /documents - список с фильтрами
+  - [ ] GET /documents/:id - детали документа
+  - [ ] POST /documents - upload (user + admin)
+  - [ ] POST /documents/search - семантический поиск
+  - [ ] DELETE /documents/:id - удалить
 
 - [ ] **Edge Function: sources-api**
   - [ ] GET /sources - список источников (фильтры, пагинация)
@@ -196,7 +261,67 @@
   - [ ] GET /geographies - список географических зон
   - [ ] GET /geographies/:id/children - дочерние зоны
 
-### 3.3 Frontend: Source Management UI (⏳ TODO)
+### 3.4 Frontend: Brands Management UI (⏳ TODO - NEW!)
+
+**Module:** `modules/admin/brands/`
+
+- [ ] **BrandsManager.tsx**
+  - [ ] Таблица всех брендов
+  - [ ] Фильтры: category (premium/middle/budget), country, active
+  - [ ] Поиск по названию
+  - [ ] CRUD операции (admin only)
+
+- [ ] **BrandFormModal.tsx**
+  - [ ] Форма создания/редактирования бренда
+  - [ ] Поля: name, manufacturer, country, category, website_url, logo_url
+  - [ ] Связь с сегментами (multi-select)
+  - [ ] Валидация через zod
+
+- [ ] **Hooks:**
+  - [ ] `useBrands()` - React Query hook для брендов
+  - [ ] `useBrandSegments()` - управление связями
+
+### 3.5 Frontend: Documents Library UI (⏳ TODO - NEW!)
+
+**Module:** `modules/admin/documents/`
+
+- [ ] **DocumentsLibrary.tsx**
+  - [ ] Таблица всех сохраненных документов
+  - [ ] Фильтры: type, date, brands, segments, geographies
+  - [ ] Full-text search по content_text
+  - [ ] Semantic search UI (поиск по смыслу через embeddings)
+  - [ ] Preview PDF/DOCX через iframe
+
+- [ ] **DocumentUploader.tsx**
+  - [ ] Drag & Drop для загрузки файлов
+  - [ ] Поддержка PDF, DOCX, PPTX
+  - [ ] Автоматическая обработка (text extraction + embedding)
+
+- [ ] **Hooks:**
+  - [ ] `useDocuments()` - загрузка списка
+  - [ ] `useDocumentUpload()` - загрузка файлов
+  - [ ] `useSemanticSearch()` - семантический поиск
+
+### 3.6 Frontend: Custom Prompts Builder (⏳ TODO - NEW!)
+
+**Module:** `modules/prompts/custom/`
+
+- [ ] **CustomPromptBuilder.tsx**
+  - [ ] Step-by-step wizard (3 шага)
+  - [ ] Шаг 1: Выбор цели (find events / analyze trends / compare competitors)
+  - [ ] Шаг 2: Фильтры (brands, segments, geographies, event_types, date_range)
+  - [ ] Шаг 3: Дополнительные инструкции + preview промпта
+
+- [ ] **PromptLibrary.tsx** (кастомные)
+  - [ ] Просмотр сохраненных промптов
+  - [ ] Кнопка "Запустить"
+  - [ ] История выполнения
+
+- [ ] **Hooks:**
+  - [ ] `useCustomPrompts()` - CRUD для промптов
+  - [ ] `useRunPrompt()` - запуск промпта
+
+### 3.7 Frontend: Source Management UI (⏳ TODO)
 
 **Module:** `modules/admin/sources/`
 
@@ -262,9 +387,11 @@
 
 ---
 
-## 🎯 Phase 4: Event Criticality & Source Tracking (⏳ FUTURE)
+## 🎯 Phase 4: AI Agents Implementation (⏳ FUTURE)
 
-**Сроки:** 2 недели | **Статус:** Планирование 📋
+**Сроки:** 3-4 недели | **Статус:** Документация готова 📋
+
+**См. детальный план:** [AI_AGENTS_ARCHITECTURE.md](AI_AGENTS_ARCHITECTURE.md)
 
 ### 4.1 Event Source Tracking
 - [ ] EventsTable - колонка "Источник" с ссылкой
@@ -355,14 +482,20 @@
 ```
 Phase 1: Foundation                   ████████████████████ 100% ✅
 Phase 2: MVP Auth+Events              ████████████████████ 100% ✅
-Phase 3: Source Management            ████████░░░░░░░░░░░░  40% 🚀 (DB ready)
-Phase 4: Criticality & Tracking       ░░░░░░░░░░░░░░░░░░░░   0% 📋
-Phase 5: Multi-Depth Search           ░░░░░░░░░░░░░░░░░░░░   0% 📋
-Phase 6: Data Analysis & AI           ░░░░░░░░░░░░░░░░░░░░   0% 💡
-Phase 7: Telegram Integration         ░░░░░░░░░░░░░░░░░░░░   0% 💡
+Phase 3: AI Agents + Admin UI         ██████████░░░░░░░░░░  50% 🚀 (Architecture ready)
+Phase 4: Agents Implementation        ░░░░░░░░░░░░░░░░░░░░   0% 📋
+Phase 5: Production Ready             ░░░░░░░░░░░░░░░░░░░░   0% 💡
+Phase 6: Advanced Features            ░░░░░░░░░░░░░░░░░░░░   0% 💡
 
-EXTENDED MVP:             ████████░░░░░░░░░░░░ 40% 🚀
+MVP with AI Agents:       ██████████░░░░░░░░░░ 50% 🚀
 ```
+
+**Новая структура фаз:**
+- Phase 1-2: ✅ Готово (Frontend + Auth + Basic Events)
+- Phase 3: 🚀 В работе (Новые таблицы + Admin UI + API для справочников)
+- Phase 4: 📋 Следующее (Реализация 8 AI-агентов + Storage setup)
+- Phase 5: 💡 Будущее (Production deploy + GitHub Actions Cron + Monitoring)
+- Phase 6: 💡 Будущее (Telegram bot, Advanced analytics, Mobile app)
 
 **Легенда:**
 - ✅ Complete - Фаза полностью завершена

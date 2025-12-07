@@ -1,10 +1,15 @@
 # TODO List - MarketMonitor
 
-**Последнее обновление:** 4 декабря 2024
-**Версия:** 0.1.0
-**AI Provider:** OpenAI API (GPT-4 / GPT-4o)
+**Последнее обновление:** 7 декабря 2024
+**Версия:** 0.5.0
+**AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini + text-embedding-3-small)
 **Frontend:** Netlify Deploy
-**Architecture:** Modular (see CLAUDE.md for rules)
+**Architecture:** Multi-Agent System (8 specialized agents)
+
+**См. также:**
+- [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) - текущий статус
+- [AI_AGENTS_ARCHITECTURE.md](AI_AGENTS_ARCHITECTURE.md) - новая архитектура агентов
+- [ROADMAP.md](ROADMAP.md) - долгосрочный план
 
 ---
 
@@ -37,9 +42,115 @@
 
 ---
 
-## 🔴 КРИТИЧЕСКИЙ ПРИОРИТЕТ (Сегодня/Завтра)
+## 🔴 КРИТИЧЕСКИЙ ПРИОРИТЕТ (Week 1-2: Phase 3)
 
-### Supabase Setup
+### Migration 007: Новые таблицы
+
+- [ ] Создать файл `supabase/migrations/007_brands_and_documents.sql`
+- [ ] Таблица `brands`:
+  - [ ] Основная таблица (id, name, manufacturer, country, category, website_url)
+  - [ ] Триггер updated_at
+  - [ ] RLS policies (view для всех, manage для админов)
+
+- [ ] Таблица `brand_segments`:
+  - [ ] Many-to-Many связь brands ↔ segments
+  - [ ] RLS policies
+
+- [ ] Таблица `documents`:
+  - [ ] Основные поля (title, description, document_type)
+  - [ ] Контент (content_text, content_html, file_url)
+  - [ ] Метаданные (source_id, published_date, brand_ids[], segment_ids[])
+  - [ ] **Embedding** VECTOR(1536) для семантического поиска
+  - [ ] Full-text search index (русский язык)
+  - [ ] Vector search index (ivfflat)
+  - [ ] RLS policies
+
+- [ ] Таблица `reports`:
+  - [ ] Основные поля (title, report_type, date_from, date_to)
+  - [ ] Контент (content_markdown, content_html)
+  - [ ] Файлы (pdf_url, docx_url, excel_url)
+  - [ ] RLS policies
+
+- [ ] Таблица `custom_prompts`:
+  - [ ] Поля: user_id, prompt_text, result_type, status
+  - [ ] Фильтры: brand_ids[], segment_ids[], geography_ids[]
+  - [ ] RLS policies (users see only own)
+
+- [ ] Обновить `events`:
+  - [ ] ADD COLUMN brand_id UUID
+  - [ ] ADD COLUMN document_id UUID
+  - [ ] ADD COLUMN criticality_reasoning TEXT
+  - [ ] ADD COLUMN criticality_factors TEXT[]
+
+- [ ] Создать `event_brands` (Many-to-Many):
+  - [ ] event_id, brand_id
+  - [ ] RLS policies
+
+- [ ] Seed данные для brands:
+  - [ ] 12+ брендов (Daikin, Midea, Haier, Ballu, etc.)
+  - [ ] Связи с сегментами через brand_segments
+
+- [ ] Применить миграцию через Supabase Dashboard
+- [ ] Проверить: pgvector extension включен
+
+### Supabase Storage Setup
+
+- [ ] Создать bucket `market-documents`
+- [ ] Настроить политики доступа:
+  - [ ] Authenticated users: READ
+  - [ ] Admins: READ, WRITE, DELETE
+  - [ ] Users: WRITE только в user-uploads/{user_id}/
+
+- [ ] Создать структуру папок:
+  ```
+  market-documents/
+  ├─ pdfs/2024/12/
+  ├─ presentations/2024/12/
+  └─ user-uploads/{user_id}/
+  ```
+
+### Migration 008: LLM Provider Management 🆕
+
+- [ ] Создать файл `supabase/migrations/008_llm_provider_management.sql`
+
+- [ ] Таблица `llm_providers`:
+  - [ ] Основные поля (name, code, api_endpoint)
+  - [ ] Шифрование API ключей (api_key_encrypted, api_key_last_4)
+  - [ ] Enable pgcrypto extension
+  - [ ] RLS policies (view для всех, manage для админов)
+  - [ ] Seed данные: OpenAI, Anthropic, Perplexity, Google
+
+- [ ] Таблица `llm_models`:
+  - [ ] Поля: provider_id, name, code, context_window
+  - [ ] Pricing: input_price_per_million, output_price_per_million
+  - [ ] Capabilities: supports_json_mode, supports_web_search
+  - [ ] recommended_for TEXT[]
+  - [ ] RLS policies
+  - [ ] Seed данные: GPT-4o, GPT-4o-mini, Claude Opus 4.5, Perplexity Sonar, Gemini 1.5
+
+- [ ] Таблица `llm_task_configs`:
+  - [ ] Поля: task_type, primary_model_id, fallback_model_id
+  - [ ] A/B testing: enable_ab_testing, ab_test_model_id, ab_test_percentage
+  - [ ] Параметры: temperature, max_tokens
+  - [ ] RLS policies
+  - [ ] Seed данные: конфигурации для web_search, event_extraction, criticality_scoring, etc.
+
+- [ ] Таблица `llm_usage_logs`:
+  - [ ] Метрики: prompt_tokens, completion_tokens, cost_usd
+  - [ ] Производительность: latency_ms
+  - [ ] A/B testing: was_ab_test, quality_score
+  - [ ] RLS policies (только админы читают)
+
+- [ ] Функции шифрования:
+  - [ ] `encrypt_api_key(api_key TEXT, encryption_key TEXT)`
+  - [ ] `decrypt_api_key(encrypted_api_key TEXT, encryption_key TEXT)`
+  - [ ] `decrypt_provider_api_key(provider_id UUID, encryption_key TEXT)`
+
+- [ ] Применить миграцию через Supabase Dashboard
+- [ ] Проверить: pgcrypto extension включен
+- [ ] Добавить ENCRYPTION_KEY в Supabase секреты
+
+### Supabase Setup (если еще не сделано)
 - [ ] Создать новый проект в https://supabase.com
   - [ ] Зайти в Dashboard
   - [ ] Нажать "New project"
@@ -75,11 +186,540 @@
 
 ---
 
-## 🟡 ВЫСОКИЙ ПРИОРИТЕТ (Неделя 1 - Эта неделя)
+## 🟡 ВЫСОКИЙ ПРИОРИТЕТ (Week 2-3: Phase 3)
 
-### Миграции БД (Создание)
+### Edge Functions - Общая настройка
 
-#### Миграция 001: Initial Schema
+#### Shared CORS Configuration (СДЕЛАТЬ ПЕРВЫМ!) ⚠️
+
+- [ ] Создать `supabase/functions/_shared/cors.ts`:
+  ```typescript
+  export const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+  ```
+
+**ВАЖНО:**
+- ⚠️ **Supabase убрал настройки CORS из Dashboard** (2024-2025)
+- ✅ **CORS headers ОБЯЗАТЕЛЬНЫ в коде каждой функции**
+- ✅ **OPTIONS запрос ВСЕГДА должен обрабатываться ПЕРВЫМ**
+- ❌ **НЕТ** dropdown или input field в Dashboard для CORS
+- 📖 [Официальная документация](https://supabase.com/docs/guides/functions/cors)
+
+**Шаблон для всех функций:**
+```typescript
+import { corsHeaders } from '../_shared/cors.ts';
+
+serve(async (req) => {
+  // ПЕРВЫМ делом обработать OPTIONS!
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    // Ваша логика
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    });
+  }
+});
+```
+
+---
+
+### Edge Functions - Новые API
+
+#### Edge Function: brands-api (2-3 дня)
+
+- [ ] Создать `supabase/functions/brands-api/index.ts`
+- [ ] GET /brands:
+  - [ ] Список всех брендов
+  - [ ] Фильтры: category, country, is_active
+  - [ ] Pagination (limit, offset)
+  - [ ] Сортировка по name
+  - [ ] Include segments (join brand_segments)
+
+- [ ] GET /brands/:id:
+  - [ ] Детали бренда
+  - [ ] Связанные сегменты
+  - [ ] Статистика (количество событий)
+
+- [ ] POST /brands (admin only):
+  - [ ] Валидация: name required, unique
+  - [ ] Создание бренда
+  - [ ] Автоматическое создание brand_segments
+
+- [ ] PATCH /brands/:id (admin only):
+  - [ ] Обновление полей
+  - [ ] Обновление связей с сегментами
+
+- [ ] DELETE /brands/:id (admin only):
+  - [ ] Soft delete (is_active = false) или hard delete
+  - [ ] Cascade delete для brand_segments
+
+- [ ] POST /brands/:id/segments (admin only):
+  - [ ] Добавить связь с сегментом
+  - [ ] Валидация: segment существует
+
+- [ ] DELETE /brands/:id/segments/:segment_id (admin only):
+  - [ ] Удалить связь с сегментом
+
+- [ ] Type-safe responses (NO any!)
+- [ ] Error handling
+- [ ] RLS проверка через Supabase client
+
+#### Edge Function: llm-providers-api (2 дня) 🆕
+
+- [ ] Создать `supabase/functions/llm-providers-api/index.ts`
+- [ ] GET /llm-providers:
+  - [ ] Список провайдеров (БЕЗ api_key_encrypted!)
+  - [ ] Include api_key_last_4 для отображения
+  - [ ] Фильтр: is_active
+
+- [ ] POST /llm-providers (admin only):
+  - [ ] Прием api_key в plaintext
+  - [ ] Шифрование через `encrypt_api_key()` RPC
+  - [ ] Сохранение api_key_last_4
+  - [ ] ВАЖНО: НЕ возвращать encrypted key в ответе
+
+- [ ] PATCH /llm-providers/:id/api-key (admin only):
+  - [ ] Обновление API ключа
+  - [ ] Re-encryption с новым ключом
+  - [ ] Обновление api_key_last_4
+
+- [ ] DELETE /llm-providers/:id (admin only):
+  - [ ] Cascade delete связанных моделей
+  - [ ] Проверка: нет активных task_configs
+
+- [ ] GET /llm-models:
+  - [ ] Список моделей с pricing
+  - [ ] Include provider details
+  - [ ] Фильтр: provider_id, is_active
+
+- [ ] GET /llm-task-configs:
+  - [ ] Список конфигураций задач
+  - [ ] Include primary/fallback/ab_test модели
+
+- [ ] PATCH /llm-task-configs/:task_type (admin only):
+  - [ ] Обновление primary_model_id, fallback_model_id
+  - [ ] Настройка A/B тестирования
+
+- [ ] GET /llm-usage-stats (admin only):
+  - [ ] Агрегированная статистика за 30 дней
+  - [ ] total_requests, total_cost_usd, total_tokens, avg_latency_ms
+
+- [ ] GET /llm-usage-logs (admin only):
+  - [ ] Последние N запросов
+  - [ ] Фильтры: task_type, model_id, status
+
+- [ ] Type-safe responses
+- [ ] Error handling
+- [ ] ENCRYPTION_KEY из env
+
+#### Edge Function: documents-api (2-3 дня)
+
+- [ ] Создать `supabase/functions/documents-api/index.ts`
+- [ ] GET /documents:
+  - [ ] Фильтры: document_type, date_from, date_to, brand_ids, segment_ids
+  - [ ] Full-text search (content_text)
+  - [ ] Pagination
+  - [ ] Сортировка по published_date DESC
+
+- [ ] GET /documents/:id:
+  - [ ] Детали документа
+  - [ ] Include related brands, segments, events
+
+- [ ] POST /documents (upload):
+  - [ ] Прием файлов (PDF, DOCX, PPTX)
+  - [ ] Upload в Supabase Storage
+  - [ ] Извлечение текста (используя библиотеки или API)
+  - [ ] Создание embedding через OpenAI
+  - [ ] Сохранение в БД
+  - [ ] Admin + User (only user-uploads/)
+
+- [ ] POST /documents/search (semantic search):
+  - [ ] Принимает текстовый запрос
+  - [ ] Создает embedding через OpenAI
+  - [ ] Ищет похожие документы (cosine similarity > 0.7)
+  - [ ] Возвращает топ-10
+
+- [ ] DELETE /documents/:id:
+  - [ ] Удаление из Storage
+  - [ ] Удаление из БД
+  - [ ] Admin или owner
+
+- [ ] Type-safe
+- [ ] OpenAI API integration для embeddings
+
+#### Edge Function: sources-api (доделать)
+
+- [ ] Доработать `supabase/functions/sources-api/index.ts`
+- [ ] GET /sources - DONE? (проверить)
+- [ ] POST /sources - добавить валидацию
+- [ ] PATCH /sources/:id - реализовать
+- [ ] DELETE /sources/:id - реализовать
+
+#### Edge Function: segments-api
+
+- [ ] Создать `supabase/functions/segments-api/index.ts`
+- [ ] GET /segments - список всех
+- [ ] POST /segments (admin only)
+- [ ] PATCH /segments/:id (admin only)
+- [ ] DELETE /segments/:id (admin only)
+
+#### Edge Function: geographies-api
+
+- [ ] Создать `supabase/functions/geographies-api/index.ts`
+- [ ] GET /geographies - список
+- [ ] GET /geographies/:id/children - дочерние зоны
+- [ ] POST /geographies (admin only)
+
+### TypeScript Types Update
+
+- [ ] Обновить `frontend/src/lib/types.ts`:
+  - [ ] Brand, BrandSegment
+  - [ ] Document, DocumentType
+  - [ ] Report, ReportType
+  - [ ] CustomPrompt
+  - [ ] Обновить MarketEvent (brand_id, document_id, criticality_reasoning)
+  - [ ] EventBrand (Many-to-Many)
+  - [ ] LLMProvider (name, code, api_key_last_4, is_active) 🆕
+  - [ ] LLMModel (provider_id, name, code, pricing, capabilities) 🆕
+  - [ ] LLMTaskConfig (task_type, primary_model_id, fallback_model_id, ab_testing) 🆕
+  - [ ] LLMUsageLog (model_id, task_type, tokens, cost_usd, latency_ms) 🆕
+
+---
+
+## 🟠 СРЕДНИЙ ПРИОРИТЕТ (Week 3-4: Phase 3)
+
+### Frontend: Brands Management UI
+
+#### BrandsManager.tsx (modules/admin/brands/)
+
+- [ ] Создать `frontend/src/modules/admin/brands/BrandsManager.tsx`
+- [ ] Ant Design Table:
+  - [ ] Колонки: Name, Manufacturer, Country, Category, Active, Segments
+  - [ ] Фильтры: category (premium/middle/budget), country, active
+  - [ ] Поиск по названию
+  - [ ] Кнопка "+ Добавить бренд"
+  - [ ] Actions: Edit, Delete (admin only)
+
+- [ ] BrandFormModal.tsx:
+  - [ ] Форма создания/редактирования
+  - [ ] Поля: name*, manufacturer, country, category, website_url, logo_url, description
+  - [ ] Multi-select для сегментов (из справочника)
+  - [ ] Валидация через zod
+  - [ ] React Hook Form integration
+
+- [ ] Hooks:
+  - [ ] `useBrands()` - React Query hook (list + get by id)
+  - [ ] `useCreateBrand()` - mutation
+  - [ ] `useUpdateBrand()` - mutation
+  - [ ] `useDeleteBrand()` - mutation
+  - [ ] `useBrandSegments()` - управление связями
+
+- [ ] Интеграция в AdminPanel (новая вкладка "Бренды")
+
+### Frontend: LLM Provider Management UI 🆕
+
+#### ProvidersManager.tsx (modules/admin/llm-config/)
+
+- [ ] Создать `frontend/src/modules/admin/llm-config/ProvidersManager.tsx`
+- [ ] Таблица провайдеров:
+  - [ ] Колонки: Provider Name, Code, API Key Status, Last 4, Active
+  - [ ] API Key Status: ✅ Configured (green) или ❌ Not Set (red)
+  - [ ] Показывать только `********xxxx` (last 4 символа)
+  - [ ] Actions: "Добавить ключ" или "Изменить ключ"
+
+- [ ] ProviderApiKeyModal.tsx:
+  - [ ] 🔐 Безопасное окно ввода API ключа
+  - [ ] Alert с предупреждением о шифровании
+  - [ ] Input.Password component
+  - [ ] Показать текущий ключ: `********xxxx`
+  - [ ] Валидация: min 20 символов
+  - [ ] Ссылки на документацию провайдеров:
+    - [ ] OpenAI: https://platform.openai.com/api-keys
+    - [ ] Anthropic: https://console.anthropic.com/settings/keys
+    - [ ] Perplexity: https://www.perplexity.ai/settings/api
+
+- [ ] Hooks:
+  - [ ] `useProviders()` - список провайдеров
+  - [ ] `useUpdateProviderApiKey()` - mutation для обновления ключа
+
+#### LLMConfigManager.tsx (modules/admin/llm-config/)
+
+- [ ] Создать `frontend/src/modules/admin/llm-config/LLMConfigManager.tsx`
+- [ ] Таблица конфигураций задач:
+  - [ ] Колонки: Task Type, Description, Primary Model, Fallback, A/B Test
+  - [ ] Select для выбора модели (показывать цену)
+  - [ ] Switch для A/B тестирования
+  - [ ] InputNumber для процента A/B теста (1-50%)
+  - [ ] Temperature, max_tokens настройки
+
+- [ ] Hooks:
+  - [ ] `useTaskConfigs()` - список конфигураций
+  - [ ] `useModels()` - список доступных моделей
+  - [ ] `useUpdateTaskConfig()` - mutation
+
+#### LLMUsageStats.tsx (modules/admin/llm-config/)
+
+- [ ] Создать `frontend/src/modules/admin/llm-config/LLMUsageStats.tsx`
+- [ ] Карточки статистики (30 дней):
+  - [ ] Всего запросов (Statistic)
+  - [ ] Общая стоимость ($USD)
+  - [ ] Всего токенов
+  - [ ] Средняя задержка (ms)
+
+- [ ] Таблица последних запросов:
+  - [ ] Колонки: Task, Model, Tokens, Cost, Latency, Status
+  - [ ] Tag для status (green/red)
+  - [ ] Pagination (20 per page)
+  - [ ] Фильтры: task_type, model, status
+
+- [ ] Hooks:
+  - [ ] `useUsageStats()` - агрегированная статистика
+  - [ ] `useUsageLogs()` - последние запросы
+
+#### Интеграция в AdminPanel
+
+- [ ] Добавить новую вкладку "LLM Configuration" в AdminPanel
+- [ ] Sub-tabs:
+  - [ ] "Провайдеры" - ProvidersManager
+  - [ ] "Конфигурация задач" - LLMConfigManager
+  - [ ] "Статистика" - LLMUsageStats
+
+### Frontend: Documents Library UI
+
+#### DocumentsLibrary.tsx (modules/admin/documents/)
+
+- [ ] Создать `frontend/src/modules/admin/documents/DocumentsLibrary.tsx`
+- [ ] Таблица документов:
+  - [ ] Колонки: Title, Type, Published Date, Source, Brands, Actions
+  - [ ] Фильтры: document_type, date_range, brands, segments
+  - [ ] Full-text search input
+  - [ ] Semantic search input (отдельно)
+  - [ ] Preview PDF/DOCX через modal с iframe
+
+- [ ] DocumentUploader.tsx:
+  - [ ] Drag & Drop UI (react-dropzone)
+  - [ ] Поддержка: PDF, DOCX, PPTX
+  - [ ] Progress bar
+  - [ ] Автоматическая обработка:
+    - [ ] Upload в Storage
+    - [ ] Text extraction
+    - [ ] Embedding generation
+
+- [ ] DocumentViewer.tsx:
+  - [ ] Modal с iframe для PDF
+  - [ ] Отображение метаданных (brands, segments, geographies)
+  - [ ] Ссылка на источник
+
+- [ ] Hooks:
+  - [ ] `useDocuments()` - list
+  - [ ] `useDocumentUpload()` - upload с прогрессом
+  - [ ] `useSemanticSearch()` - семантический поиск
+  - [ ] `useDeleteDocument()` - удаление
+
+### Frontend: Custom Prompts Builder
+
+#### CustomPromptBuilder.tsx (modules/prompts/custom/)
+
+- [ ] Создать `frontend/src/modules/prompts/custom/CustomPromptBuilder.tsx`
+- [ ] Step-by-step wizard (3 шага):
+
+  **Шаг 1: Выбор цели**
+  - [ ] Radio buttons: "Найти события" / "Проанализировать тренды" / "Сравнить конкурентов"
+
+  **Шаг 2: Фильтры**
+  - [ ] Multi-select: Бренды (из справочника)
+  - [ ] Multi-select: Сегменты
+  - [ ] Multi-select: География
+  - [ ] Multi-select: Типы событий (promo, price, contract, etc.)
+  - [ ] Date Range Picker: Период
+
+  **Шаг 3: Дополнительные инструкции**
+  - [ ] Textarea для custom инструкций
+  - [ ] Preview сгенерированного промпта
+  - [ ] Checkbox: "Сохранить в библиотеку"
+  - [ ] Input: Название (если сохраняем)
+
+- [ ] Генерация промпта из параметров
+- [ ] Сохранение в custom_prompts
+- [ ] Запуск промпта (вызов Edge Function)
+
+- [ ] PromptLibrary.tsx:
+  - [ ] Список сохраненных промптов (where is_saved = true)
+  - [ ] Кнопка "Запустить"
+  - [ ] История выполнения (status, result_data)
+
+- [ ] Hooks:
+  - [ ] `useCustomPrompts()` - CRUD
+  - [ ] `useRunPrompt()` - запуск промпта
+
+### Frontend: Source Management UI (доделать)
+
+#### SourcesManager (modules/admin/sources/) - уже начато?
+
+- [ ] Проверить текущий статус SourcesManager
+- [ ] Доделать CRUD операции
+- [ ] Интеграция с brands (какие бренды продает источник)
+
+---
+
+## 🔵 ОБЫЧНЫЙ ПРИОРИТЕТ (Week 5-6: Phase 4)
+
+### AI Agents Implementation
+
+**См. детальный план:** [AI_AGENTS_ARCHITECTURE.md](AI_AGENTS_ARCHITECTURE.md)
+
+#### Shared Library: UniversalLLMClient 🆕 (СНАЧАЛА!)
+
+- [ ] Создать `supabase/functions/_shared/universal-llm-client.ts`
+
+- [ ] Интерфейсы:
+  - [ ] `LLMRequest`: messages, temperature, max_tokens, response_format
+  - [ ] `LLMResponse`: content, usage, cost_usd, model, latency_ms
+
+- [ ] Класс `UniversalLLMClient`:
+  - [ ] Constructor(supabase, taskType, encryptionKey)
+  - [ ] `async call(request: LLMRequest): Promise<LLMResponse>`
+  - [ ] `selectModel(config)` - выбор primary или A/B модели
+  - [ ] `getTaskConfig()` - получение конфигурации задачи из БД
+  - [ ] `getModelAndProvider(modelId)` - получение модели + провайдера
+  - [ ] `decryptApiKey(providerId)` - расшифровка через RPC
+
+- [ ] Провайдеры:
+  - [ ] `callOpenAI(model, apiKey, request, config)` - OpenAI SDK
+  - [ ] `callAnthropic(model, apiKey, request, config)` - Anthropic SDK
+  - [ ] `callPerplexity(model, apiKey, request, config)` - Fetch API
+  - [ ] `callGoogle(model, apiKey, request, config)` - TODO
+
+- [ ] Утилиты:
+  - [ ] `calculateCost(model, promptTokens, completionTokens)` - расчет стоимости
+  - [ ] `logUsage(model, response, status)` - логирование в llm_usage_logs
+  - [ ] `logError(errorMessage, latency_ms)` - логирование ошибок
+
+- [ ] Fallback mechanism:
+  - [ ] При ошибке primary модели → попытка fallback
+  - [ ] Логирование использования fallback
+
+- [ ] Type-safe (NO any!)
+- [ ] Error handling для каждого провайдера
+- [ ] ВАЖНО: Расшифровка API ключа только server-side
+
+#### Orchestrator (Week 1)
+
+- [ ] Создать `supabase/functions/orchestrator/index.ts`
+- [ ] Логика запуска промптов по расписанию
+- [ ] Интеграция с search_runs
+- [ ] Error handling и retry logic
+
+#### Agents: Data Collection (Week 1-2)
+
+- [ ] Agent 1: Source Hunter (`agents/source-hunter/index.ts`)
+  - [ ] Определение приоритетных источников
+  - [ ] Построение веб-поисковых запросов
+
+- [ ] Agent 2: Content Fetcher (`agents/content-fetcher/index.ts`)
+  - [ ] Прямой fetch источников
+  - [ ] OpenAI Web Search integration
+  - [ ] Error handling для недоступных источников
+
+- [ ] Agent 3: Document Processor (`agents/document-processor/index.ts`)
+  - [ ] Upload в Supabase Storage
+  - [ ] Text extraction (PDF, PPTX)
+  - [ ] HTML → clean text
+  - [ ] Embedding generation
+  - [ ] Mentions extraction (brands, segments, geographies)
+  - [ ] Сохранение в documents table
+
+#### Agents: Event Processing (Week 2-3)
+
+- [ ] Agent 4: Event Extractor (`agents/event-extractor/index.ts`)
+  - [ ] Извлечение событий из текста
+  - [ ] Chunking для длинных документов
+  - [ ] Промпт инжиниринг для точности
+
+- [ ] Agent 6: Criticality Scorer (`agents/criticality-scorer/index.ts`)
+  - [ ] Batch processing (10 событий)
+  - [ ] Промпт с 5-уровневой шкалой
+  - [ ] Reasoning + factors
+
+- [ ] Agent 7: Duplicate Detector (`agents/duplicate-detector/index.ts`)
+  - [ ] Cosine similarity через embeddings
+  - [ ] Merge logic
+  - [ ] Threshold: similarity > 0.85
+
+#### Agents: Reporting & Alerts (Week 3)
+
+- [ ] Report Generator (`agents/report-generator/index.ts`)
+  - [ ] Daily Digest
+  - [ ] Weekly Analytics
+  - [ ] Monthly Summary
+  - [ ] Export в PDF/DOCX
+
+- [ ] Alert Manager (`agents/alert-manager/index.ts`)
+  - [ ] Telegram bot setup
+  - [ ] Email notifications
+  - [ ] In-app alerts (таблица alerts в БД)
+
+#### Custom Prompt Runner
+
+- [ ] `agents/custom-prompt-runner/index.ts`
+  - [ ] Запуск кастомных промптов
+  - [ ] Определение: нужен новый поиск или достаточно БД
+  - [ ] Генерация отчета
+
+#### Testing & Integration
+
+- [ ] End-to-end тесты полного pipeline
+- [ ] Performance optimization
+- [ ] Cost optimization (caching, batching)
+
+---
+
+## ⚪ НИЗКИЙ ПРИОРИТЕТ (Phase 5: Production)
+
+### GitHub Actions Cron
+
+- [ ] Создать `.github/workflows/daily-search.yml`
+- [ ] Schedule: `0 9 * * *` (09:00 UTC = 12:00 MSK)
+- [ ] Trigger Orchestrator Edge Function
+- [ ] Environment variables setup
+
+### Monitoring & Logging
+
+- [ ] Supabase logs monitoring
+- [ ] Error tracking (Sentry?)
+- [ ] Performance metrics
+
+### User Testing & Polish
+
+- [ ] User acceptance testing
+- [ ] Bug fixes
+- [ ] UI/UX improvements
+- [ ] Mobile responsiveness
+
+### Documentation
+
+- [ ] User Guide
+- [ ] Admin Guide
+- [ ] API Documentation
+
+---
+
+## 🗑️ УДАЛЕННЫЕ СЕКЦИИ (устаревшие)
+
+<details>
+<summary>Старые миграции (001-004) - уже применены ✅</summary>
+
+#### Миграция 001: Initial Schema (APPLIED ✅)
 - [ ] Создать файл `supabase/migrations/001_initial_schema.sql`
 - [ ] Создать таблицу `events`:
   ```sql

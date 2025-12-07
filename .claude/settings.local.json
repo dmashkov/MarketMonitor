@@ -14,7 +14,10 @@
       "Bash(npm run dev:*)",
       "Bash(git restore:*)",
       "Bash(npm run build:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "WebSearch",
+      "WebFetch(domain:supabase.com)"
     ],
     "deny": [],
     "ask": []

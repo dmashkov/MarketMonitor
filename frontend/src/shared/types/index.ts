@@ -177,6 +177,69 @@ export interface SourceUrlWithSource extends SourceUrl {
 
 /**
  * ============================================================================
+ * NEW: Brand Management Types
+ * ============================================================================
+ */
+
+export type BrandCategory = 'premium' | 'middle' | 'budget';
+
+export interface Brand {
+  id: string;
+  name: string; // e.g., "Daikin", "Midea", "Gree"
+  manufacturer: string | null; // Производитель (может отличаться от бренда)
+  country: string | null; // Страна производства
+  category: BrandCategory; // premium, middle, budget
+  website_url: string | null;
+  logo_url: string | null;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+/**
+ * Many-to-Many связь между брендами и сегментами
+ */
+export interface BrandSegment {
+  id: string;
+  brand_id: string;
+  segment_id: string;
+  created_at: string;
+}
+
+/**
+ * Brand с подгруженными сегментами
+ */
+export interface BrandWithSegments extends Brand {
+  segments?: SegmentEntity[];
+  segment_ids?: string[]; // Массив ID сегментов для удобства
+}
+
+/**
+ * Form Data для создания бренда
+ */
+export interface CreateBrandFormData {
+  name: string;
+  manufacturer?: string;
+  country?: string;
+  category: BrandCategory;
+  website_url?: string;
+  logo_url?: string;
+  description?: string;
+  is_active?: boolean;
+  segment_ids: string[]; // ID сегментов для связи
+}
+
+/**
+ * Form Data для обновления бренда
+ */
+export interface UpdateBrandFormData extends Partial<CreateBrandFormData> {
+  id: string;
+}
+
+/**
+ * ============================================================================
  * UPDATED: Market Event Types (with new fields)
  * ============================================================================
  */

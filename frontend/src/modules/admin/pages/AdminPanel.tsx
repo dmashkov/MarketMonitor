@@ -11,6 +11,7 @@ import { LockOutlined } from '@ant-design/icons';
 import useAuth from '../../../modules/auth/hooks/useAuth';
 import { BrandsManager } from '../brands';
 import { DocumentsLibrary } from '../documents';
+import { SourcesManager } from '../sources';
 
 /**
  * Компонент админ-панели
@@ -49,6 +50,11 @@ export const AdminPanel: React.FC = () => {
               key: 'documents',
               label: '📄 Документы',
               children: <DocumentsLibrary />,
+            },
+            {
+              key: 'sources',
+              label: '📰 Источники',
+              children: <SourcesManager />,
             },
             {
               key: 'users',

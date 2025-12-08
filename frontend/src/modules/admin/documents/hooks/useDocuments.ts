@@ -107,7 +107,7 @@ async function fetchDocuments(filters?: DocumentFilters): Promise<DocumentsListR
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/documents?${params.toString()}`;
+  const url = `${supabaseUrl}/functions/v1/documents-api?${params.toString()}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -135,7 +135,7 @@ async function fetchDocumentById(id: string): Promise<DocumentDetailResponse> {
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/documents/${id}`;
+  const url = `${supabaseUrl}/functions/v1/documents-api/${id}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -163,7 +163,7 @@ async function createDocument(data: CreateDocumentFormData): Promise<DocumentCre
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/documents`;
+  const url = `${supabaseUrl}/functions/v1/documents-api`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -192,7 +192,7 @@ async function semanticSearch(request: SemanticSearchRequest): Promise<SemanticS
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/documents/search`;
+  const url = `${supabaseUrl}/functions/v1/documents-api/search`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -221,7 +221,7 @@ async function deleteDocument(id: string): Promise<DocumentDeleteResponse> {
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/documents/${id}`;
+  const url = `${supabaseUrl}/functions/v1/documents-api/${id}`;
 
   const response = await fetch(url, {
     method: 'DELETE',

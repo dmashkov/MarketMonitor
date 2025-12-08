@@ -86,7 +86,7 @@ async function fetchSources(filters?: SourceFilters): Promise<SourcesListRespons
   if (filters?.search) params.append('search', filters.search);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/sources?${params.toString()}`;
+  const url = `${supabaseUrl}/functions/v1/sources-api?${params.toString()}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -114,7 +114,7 @@ async function fetchSource(id: string): Promise<SourceResponse> {
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/sources/${id}`;
+  const url = `${supabaseUrl}/functions/v1/sources-api/${id}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -142,7 +142,7 @@ async function createSource(data: CreateSourceFormData): Promise<SourceResponse>
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/sources`;
+  const url = `${supabaseUrl}/functions/v1/sources-api`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -171,7 +171,7 @@ async function updateSource(id: string, data: UpdateSourceFormData): Promise<Sou
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/sources/${id}`;
+  const url = `${supabaseUrl}/functions/v1/sources-api/${id}`;
 
   const response = await fetch(url, {
     method: 'PATCH',
@@ -200,7 +200,7 @@ async function deleteSource(id: string): Promise<void> {
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/sources/${id}`;
+  const url = `${supabaseUrl}/functions/v1/sources-api/${id}`;
 
   const response = await fetch(url, {
     method: 'DELETE',

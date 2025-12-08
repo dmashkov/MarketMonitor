@@ -41,7 +41,7 @@ async function fetchSegments(): Promise<SegmentsListResponse> {
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/segments`;
+  const url = `${supabaseUrl}/functions/v1/segments-api`;
 
   const response = await fetch(url, {
     method: 'GET',

@@ -65,7 +65,7 @@ interface UpdateBrandRequest extends Partial<CreateBrandRequest> {}
 serve(async (req) => {
   // ⚠️ ВАЖНО: OPTIONS должен быть ПЕРВЫМ!
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders, status: 200 });
   }
 
   try {

@@ -264,6 +264,7 @@ serve(async (req) => {
         'Access-Control-Allow-Methods': 'POST',
         'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
       },
+      status: 200,
     });
   }
 

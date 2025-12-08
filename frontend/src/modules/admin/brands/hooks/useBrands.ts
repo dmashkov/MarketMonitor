@@ -105,7 +105,7 @@ async function fetchBrands(filters?: BrandFilters): Promise<BrandsListResponse> 
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/brands?${params.toString()}`;
+  const url = `${supabaseUrl}/functions/v1/brands-api?${params.toString()}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -133,7 +133,7 @@ async function fetchBrandById(id: string): Promise<BrandDetailResponse> {
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/brands/${id}`;
+  const url = `${supabaseUrl}/functions/v1/brands-api/${id}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -161,7 +161,7 @@ async function createBrand(data: CreateBrandFormData): Promise<BrandCreateRespon
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/brands`;
+  const url = `${supabaseUrl}/functions/v1/brands-api`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -190,7 +190,7 @@ async function updateBrand({ id, ...data }: UpdateBrandFormData): Promise<BrandU
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/brands/${id}`;
+  const url = `${supabaseUrl}/functions/v1/brands-api/${id}`;
 
   const response = await fetch(url, {
     method: 'PATCH',
@@ -219,7 +219,7 @@ async function deleteBrand(id: string): Promise<BrandDeleteResponse> {
   }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const url = `${supabaseUrl}/functions/v1/brands/${id}`;
+  const url = `${supabaseUrl}/functions/v1/brands-api/${id}`;
 
   const response = await fetch(url, {
     method: 'DELETE',

@@ -17,7 +17,6 @@ import {
   message,
   Popconfirm,
   Tooltip,
-  Switch,
 } from 'antd';
 import {
   PlusOutlined,

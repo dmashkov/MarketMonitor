@@ -98,16 +98,7 @@ async function fetchBrands(filters?: BrandFilters): Promise<BrandsListResponse> 
   params.append('page', String(page));
   params.append('limit', String(limit));
 
-  const { data, error } = await supabase.functions.invoke<BrandsListResponse>(
-    'brands-api',
-    {
-      method: 'GET',
-      body: null,
-    }
-  );
-
-  // NOTE: Supabase Functions invoke не поддерживает query params напрямую
-  // Используем прямой fetch для полного контроля
+  // Используем прямой fetch для полного контроля над query params
   const session = await supabase.auth.getSession();
   if (!session.data.session) {
     throw new Error('Not authenticated');

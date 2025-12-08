@@ -10,6 +10,7 @@ import { Card, Empty, Tag, Tabs, Alert } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import useAuth from '../../../modules/auth/hooks/useAuth';
 import { BrandsManager } from '../brands';
+import { DocumentsLibrary } from '../documents';
 
 /**
  * Компонент админ-панели
@@ -43,6 +44,11 @@ export const AdminPanel: React.FC = () => {
               key: 'brands',
               label: '🏷️ Бренды',
               children: <BrandsManager />,
+            },
+            {
+              key: 'documents',
+              label: '📄 Документы',
+              children: <DocumentsLibrary />,
             },
             {
               key: 'users',

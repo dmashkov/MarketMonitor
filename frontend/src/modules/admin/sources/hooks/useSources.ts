@@ -12,7 +12,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type {
-  Source,
   SourceWithType,
   CheckFrequency,
 } from '@/shared/types';

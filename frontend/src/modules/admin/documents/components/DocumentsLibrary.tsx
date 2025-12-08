@@ -95,11 +95,11 @@ export const DocumentsLibrary: React.FC = () => {
   };
 
   const handleDateRangeChange = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
-    if (dates && dates[0] && dates[1]) {
+    if (dates && dates[0] !== null && dates[1] !== null) {
       setFilters((prev) => ({
         ...prev,
-        date_from: dates[0].format('YYYY-MM-DD'),
-        date_to: dates[1].format('YYYY-MM-DD'),
+        date_from: dates[0]!.format('YYYY-MM-DD'),
+        date_to: dates[1]!.format('YYYY-MM-DD'),
         page: 1,
       }));
     } else {
@@ -279,7 +279,61 @@ export const DocumentsLibrary: React.FC = () => {
 
   // Колонки для результатов semantic search
   const searchResultColumns: ColumnsType<SemanticSearchResult> = [
-    ...columns.slice(0, -1), // Все колонки кроме Actions
+    {
+      title: 'Тип',
+      dataIndex: 'document_type',
+      key: 'document_type',
+      width: 60,
+      align: 'center',
+      render: (type: DocumentType) => (
+        <Tooltip title={documentTypeLabels[type]}>
+          <span style={{ fontSize: 20 }}>{documentTypeIcons[type]}</span>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Название',
+      dataIndex: 'title',
+      key: 'title',
+      width: 300,
+      ellipsis: true,
+      render: (title: string, record) => (
+        <Space direction="vertical" size={0}>
+          <Text strong>{title}</Text>
+          {record.description && (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {record.description.substring(0, 100)}
+              {record.description.length > 100 && '...'}
+            </Text>
+          )}
+        </Space>
+      ),
+    },
+    {
+      title: 'Дата публикации',
+      dataIndex: 'published_date',
+      key: 'published_date',
+      width: 130,
+      render: (date: string | null) =>
+        date ? dayjs(date).format('DD.MM.YYYY') : '—',
+    },
+    {
+      title: 'Источник',
+      dataIndex: 'source_url',
+      key: 'source_url',
+      width: 100,
+      align: 'center',
+      render: (url: string | null) =>
+        url ? (
+          <Tooltip title={url}>
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              <GlobalOutlined style={{ fontSize: 18 }} />
+            </a>
+          </Tooltip>
+        ) : (
+          '—'
+        ),
+    },
     {
       title: 'Сходство',
       dataIndex: 'similarity',

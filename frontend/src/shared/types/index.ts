@@ -240,6 +240,89 @@ export interface UpdateBrandFormData extends Partial<CreateBrandFormData> {
 
 /**
  * ============================================================================
+ * NEW: Document Management Types
+ * ============================================================================
+ */
+
+export type DocumentType = 'pdf' | 'docx' | 'pptx' | 'html' | 'webpage';
+
+export interface Document {
+  id: string;
+  title: string;
+  description: string | null;
+  document_type: DocumentType;
+
+  // Контент
+  content_text: string | null;
+  content_html: string | null;
+  file_url: string | null;
+  source_url: string | null;
+
+  // Метаданные
+  source_id: string | null;
+  published_date: string | null;
+  fetched_at: string;
+
+  // Mentions (массивы UUID)
+  brand_ids: string[] | null;
+  segment_ids: string[] | null;
+  geography_ids: string[] | null;
+
+  // Embeddings (vector для семантического поиска)
+  embedding: number[] | null;
+
+  // Audit
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+}
+
+/**
+ * Document с подгруженными связями
+ */
+export interface DocumentWithRelations extends Document {
+  source?: Source | null;
+  brands?: Brand[];
+  segments?: SegmentEntity[];
+  geographies?: Geography[];
+}
+
+/**
+ * Form Data для создания документа
+ */
+export interface CreateDocumentFormData {
+  title: string;
+  description?: string;
+  document_type: DocumentType;
+  content_text?: string;
+  content_html?: string;
+  file_url?: string;
+  source_url?: string;
+  source_id?: string;
+  published_date?: string;
+  brand_ids?: string[];
+  segment_ids?: string[];
+  geography_ids?: string[];
+}
+
+/**
+ * Semantic Search Request
+ */
+export interface SemanticSearchRequest {
+  query: string;
+  limit?: number;
+  threshold?: number;
+}
+
+/**
+ * Semantic Search Result
+ */
+export interface SemanticSearchResult extends Document {
+  similarity: number; // 0.0 - 1.0 (1.0 = identical)
+}
+
+/**
+ * ============================================================================
  * UPDATED: Market Event Types (with new fields)
  * ============================================================================
  */

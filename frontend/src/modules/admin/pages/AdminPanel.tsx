@@ -9,6 +9,7 @@ import React from 'react';
 import { Card, Empty, Tag, Tabs, Alert } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import useAuth from '../../../modules/auth/hooks/useAuth';
+import { BrandsManager } from '../brands';
 
 /**
  * Компонент админ-панели
@@ -36,7 +37,13 @@ export const AdminPanel: React.FC = () => {
         <h1>Администрирование</h1>
 
         <Tabs
+          defaultActiveKey="brands"
           items={[
+            {
+              key: 'brands',
+              label: '🏷️ Бренды',
+              children: <BrandsManager />,
+            },
             {
               key: 'users',
               label: '👥 Пользователи',

@@ -295,7 +295,10 @@ serve(async (req: Request) => {
 
     // Parse URL
     const url = new URL(req.url);
-    const pathParts = url.pathname.split('/').filter((p) => p);
+    const fullPath = url.pathname.split('/').filter((p) => p);
+
+    // КРИТИЧНО: Убираем название функции из path
+    const pathParts = fullPath.slice(1);
 
     // Route handling (GET only)
     const method = req.method;

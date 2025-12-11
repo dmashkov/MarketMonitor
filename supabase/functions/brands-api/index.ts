@@ -107,13 +107,19 @@ serve(async (req) => {
 
     // Парсинг URL и метода
     const url = new URL(req.url);
-    const pathParts = url.pathname.split('/').filter(Boolean);
+    const fullPath = url.pathname.split('/').filter(Boolean);
+
+    // КРИТИЧНО: Убираем название функции из path
+    // url.pathname = '/brands-api/brands' → pathParts = ['brands']
+    // url.pathname = '/brands-api/brands/123' → pathParts = ['brands', '123']
+    const pathParts = fullPath.slice(1);
+
     const method = req.method;
 
     // ========================================
-    // GET /brands - Список всех брендов
+    // GET /brands-api - Список всех брендов
     // ========================================
-    if (method === 'GET' && pathParts.length === 1 && pathParts[0] === 'brands') {
+    if (method === 'GET' && pathParts.length === 0) {
       // Фильтры из query params
       const category = url.searchParams.get('category');
       const country = url.searchParams.get('country');
@@ -198,10 +204,10 @@ serve(async (req) => {
     }
 
     // ========================================
-    // GET /brands/:id - Детали бренда
+    // GET /brands-api/:id - Детали бренда
     // ========================================
-    if (method === 'GET' && pathParts.length === 2 && pathParts[0] === 'brands') {
-      const brandId = pathParts[1];
+    if (method === 'GET' && pathParts.length === 1) {
+      const brandId = pathParts[0];
 
       const { data: brand, error: brandError } = await supabaseClient
         .from('brands')
@@ -242,9 +248,9 @@ serve(async (req) => {
     }
 
     // ========================================
-    // POST /brands - Создать бренд (admin only)
+    // POST /brands-api - Создать бренд (admin only)
     // ========================================
-    if (method === 'POST' && pathParts.length === 1 && pathParts[0] === 'brands') {
+    if (method === 'POST' && pathParts.length === 0) {
       if (!isAdmin) {
         return new Response(
           JSON.stringify({ error: 'Forbidden: Admin only' }),
@@ -325,9 +331,9 @@ serve(async (req) => {
     }
 
     // ========================================
-    // PATCH /brands/:id - Обновить бренд (admin only)
+    // PATCH /brands-api/:id - Обновить бренд (admin only)
     // ========================================
-    if (method === 'PATCH' && pathParts.length === 2 && pathParts[0] === 'brands') {
+    if (method === 'PATCH' && pathParts.length === 1) {
       if (!isAdmin) {
         return new Response(
           JSON.stringify({ error: 'Forbidden: Admin only' }),
@@ -338,7 +344,7 @@ serve(async (req) => {
         );
       }
 
-      const brandId = pathParts[1];
+      const brandId = pathParts[0];
       const body: UpdateBrandRequest = await req.json();
 
       // Проверяем существование бренда
@@ -411,9 +417,9 @@ serve(async (req) => {
     }
 
     // ========================================
-    // DELETE /brands/:id - Удалить бренд (admin only)
+    // DELETE /brands-api/:id - Удалить бренд (admin only)
     // ========================================
-    if (method === 'DELETE' && pathParts.length === 2 && pathParts[0] === 'brands') {
+    if (method === 'DELETE' && pathParts.length === 1) {
       if (!isAdmin) {
         return new Response(
           JSON.stringify({ error: 'Forbidden: Admin only' }),
@@ -424,7 +430,7 @@ serve(async (req) => {
         );
       }
 
-      const brandId = pathParts[1];
+      const brandId = pathParts[0];
 
       // Проверяем существование
       const { data: existingBrand } = await supabaseClient

@@ -140,13 +140,18 @@ serve(async (req) => {
 
     // Парсинг URL и метода
     const url = new URL(req.url);
-    const pathParts = url.pathname.split('/').filter(Boolean);
+    const fullPath = url.pathname.split('/').filter(Boolean);
+
+    // КРИТИЧНО: Убираем название функции из path
+    // url.pathname = '/documents-api/...' → pathParts = [...]
+    const pathParts = fullPath.slice(1);
+
     const method = req.method;
 
     // ========================================
-    // GET /documents - Список всех документов
+    // GET /documents-api - Список всех документов
     // ========================================
-    if (method === 'GET' && pathParts.length === 1 && pathParts[0] === 'documents') {
+    if (method === 'GET' && pathParts.length === 0) {
       // Фильтры из query params
       const document_type = url.searchParams.get('document_type');
       const source_id = url.searchParams.get('source_id');
@@ -209,10 +214,10 @@ serve(async (req) => {
     }
 
     // ========================================
-    // GET /documents/:id - Детали документа
+    // GET /documents-api/:id - Детали документа
     // ========================================
-    if (method === 'GET' && pathParts.length === 2 && pathParts[0] === 'documents') {
-      const documentId = pathParts[1];
+    if (method === 'GET' && pathParts.length === 1) {
+      const documentId = pathParts[0];
 
       const { data: document, error: docError } = await supabaseClient
         .from('documents')
@@ -280,9 +285,9 @@ serve(async (req) => {
     }
 
     // ========================================
-    // POST /documents - Создать документ
+    // POST /documents-api - Создать документ
     // ========================================
-    if (method === 'POST' && pathParts.length === 1 && pathParts[0] === 'documents') {
+    if (method === 'POST' && pathParts.length === 0) {
       const body: CreateDocumentRequest = await req.json();
 
       // Валидация
@@ -378,9 +383,9 @@ serve(async (req) => {
     }
 
     // ========================================
-    // POST /documents/search - Семантический поиск
+    // POST /documents-api/search - Семантический поиск
     // ========================================
-    if (method === 'POST' && pathParts.length === 2 && pathParts[0] === 'documents' && pathParts[1] === 'search') {
+    if (method === 'POST' && pathParts.length === 1 && pathParts[0] === 'search') {
       const body: SemanticSearchRequest = await req.json();
 
       if (!body.query || body.query.trim().length === 0) {
@@ -467,10 +472,10 @@ serve(async (req) => {
     }
 
     // ========================================
-    // DELETE /documents/:id - Удалить документ (admin + owner)
+    // DELETE /documents-api/:id - Удалить документ (admin + owner)
     // ========================================
-    if (method === 'DELETE' && pathParts.length === 2 && pathParts[0] === 'documents') {
-      const documentId = pathParts[1];
+    if (method === 'DELETE' && pathParts.length === 1) {
+      const documentId = pathParts[0];
 
       // Проверяем существование документа
       const { data: existingDoc } = await supabaseClient

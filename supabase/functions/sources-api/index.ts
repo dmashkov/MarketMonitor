@@ -420,7 +420,12 @@ serve(async (req: Request) => {
 
     // Parse URL
     const url = new URL(req.url);
-    const pathParts = url.pathname.split('/').filter((p) => p);
+    const fullPath = url.pathname.split('/').filter((p) => p);
+
+    // КРИТИЧНО: Убираем название функции из path
+    // url.pathname = '/sources-api/sources' → pathParts = ['sources']
+    // url.pathname = '/sources-api/sources/123' → pathParts = ['sources', '123']
+    const pathParts = fullPath.slice(1);
 
     // Route handling
     const method = req.method;

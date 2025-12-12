@@ -12,6 +12,7 @@ import useAuth from '../../../modules/auth/hooks/useAuth';
 import { BrandsManager } from '../brands';
 import { DocumentsLibrary } from '../documents';
 import { SourcesManager } from '../sources';
+import { UsersManager } from '../users';
 
 /**
  * Компонент админ-панели
@@ -59,30 +60,7 @@ export const AdminPanel: React.FC = () => {
             {
               key: 'users',
               label: '👥 Пользователи',
-              children: (
-                <Card style={{ marginTop: '16px' }}>
-                  <div style={{ textAlign: 'center', padding: '40px' }}>
-                    <Empty
-                      description={
-                        <div>
-                          <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
-                            👥 Управление пользователями
-                          </p>
-                          <p style={{ color: '#666' }}>
-                            Функционал будет реализован в Phase 3
-                          </p>
-                        </div>
-                      }
-                    />
-                    <div style={{ marginTop: '24px' }}>
-                      <Tag color="blue">Phase 3</Tag>
-                      <p style={{ color: '#999', fontSize: '12px', marginTop: '12px' }}>
-                        Будет включено: список пользователей, создание, редактирование, удаление
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              ),
+              children: <UsersManager />,
             },
             {
               key: 'prompts',

@@ -368,6 +368,10 @@ serve(async (req) => {
       }
 
       // Создаем документ
+      // ВАЖНО: Если published_date не указана, используем текущую дату
+      // чтобы новые документы отображались вверху списка (сортировка по published_date DESC)
+      const publishedDate = body.published_date || new Date().toISOString();
+
       const { data: newDocument, error: createError } = await supabaseClient
         .from('documents')
         .insert({
@@ -379,7 +383,7 @@ serve(async (req) => {
           file_url: body.file_url || null,
           source_url: body.source_url || null,
           source_id: body.source_id || null,
-          published_date: body.published_date || null,
+          published_date: publishedDate,
           brand_ids: body.brand_ids || null,
           segment_ids: body.segment_ids || null,
           geography_ids: body.geography_ids || null,

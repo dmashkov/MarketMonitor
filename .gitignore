@@ -67,3 +67,4 @@ Thumbs.db
 # Parcel related files
 dist/
 .parcel-cache
+add_admin.sql

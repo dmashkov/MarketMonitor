@@ -16,6 +16,7 @@ import type { UploadProps, UploadFile } from 'antd';
 import { useForm, Controller } from 'react-hook-form';
 import { useCreateDocument } from '../hooks/useDocuments';
 import type { DocumentType, CreateDocumentFormData } from '@/shared/types';
+import { supabase } from '@/lib/supabase';
 
 const { Dragger } = Upload;
 const { TextArea } = Input;
@@ -81,15 +82,47 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
     setUploading(true);
 
     try {
-      // В реальном приложении здесь был бы upload файла в Supabase Storage
-      // Для MVP просто создаем документ с текстом
+      let fileUrl: string | undefined = undefined;
+
+      // Если есть файл, загружаем в Supabase Storage
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        const file = fileList[0].originFileObj;
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
+
+        // Генерируем уникальное имя файла
+        const timestamp = Date.now();
+        const fileName = `${timestamp}_${file.name}`;
+        const filePath = `user-uploads/${user.id}/${fileName}`;
+
+        // Загружаем файл в Storage bucket
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('market-documents')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw new Error(`Ошибка загрузки файла: ${uploadError.message}`);
+        }
+
+        // Получаем публичный URL (для приватных buckets используем getPublicUrl, но файл доступен только authenticated users)
+        const { data: { publicUrl } } = supabase.storage
+          .from('market-documents')
+          .getPublicUrl(uploadData.path);
+
+        fileUrl = publicUrl;
+      }
+
+      // Создаем документ с URL файла
       const documentData: CreateDocumentFormData = {
         title: values.title,
         description: values.description,
         document_type: values.document_type,
         source_url: values.source_url,
         content_text: values.content_text,
-        // file_url будет добавлен после upload в Storage
+        file_url: fileUrl,
       };
 
       await createMutation.mutateAsync(documentData);
@@ -144,7 +177,15 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         setValue('title', fileName);
       }
 
-      setFileList([file]);
+      // Добавляем файл в список с правильной структурой UploadFile
+      setFileList([
+        {
+          uid: String(Date.now()),
+          name: file.name,
+          status: 'done',
+          originFileObj: file as any, // originFileObj содержит оригинальный File объект
+        },
+      ]);
 
       // Предотвращаем автоматический upload (мы будем делать это вручную)
       return false;

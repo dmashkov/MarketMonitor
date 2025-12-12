@@ -14,12 +14,13 @@
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 // CORS Headers (встроено, т.к. Supabase не поддерживает ../_shared/ при деплое)
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
 };
 
 // Типы (соответствуют frontend/src/shared/types/index.ts)
@@ -69,26 +70,46 @@ serve(async (req) => {
   }
 
   try {
-    // Инициализация Supabase клиента
+    // Получаем authorization header для проверки пользователя
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      );
+    }
+
+    // Environment variables
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    // Извлекаем JWT токен из Authorization header
+    const jwt = authHeader.replace('Bearer ', '');
+
+    // Инициализация Supabase клиента с SERVICE_ROLE_KEY для обхода RLS
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY,
       {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
         },
       }
     );
 
-    // Проверка аутентификации
+    // Проверка аутентификации - передаем JWT явно
     const {
       data: { user },
       error: authError,
-    } = await supabaseClient.auth.getUser();
+    } = await supabaseClient.auth.getUser(jwt);
 
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized', details: authError?.message }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 401,

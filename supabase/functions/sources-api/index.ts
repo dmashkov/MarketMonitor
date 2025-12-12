@@ -397,22 +397,22 @@ serve(async (req: Request) => {
       return errorResponse('Missing authorization header', 401);
     }
 
-    // Initialize Supabase client
+    // Extract JWT token from Authorization header
+    const jwt = authHeader.replace('Bearer ', '');
+
+    // Initialize Supabase client with SERVICE_ROLE_KEY to bypass RLS
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
-      global: {
-        headers: { authorization: authHeader },
-      },
     });
 
-    // Verify user
+    // Verify user - pass JWT explicitly
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser();
+    } = await supabase.auth.getUser(jwt);
 
     if (authError || !user) {
       return errorResponse('Unauthorized', 401);

@@ -65,26 +65,17 @@ const corsHeaders = {
 // Helper Functions
 // ============================================================================
 
-function handleCors(response: Response): Response {
-  response.headers.append('Access-Control-Allow-Origin', corsHeaders['Access-Control-Allow-Origin']);
-  response.headers.append(
-    'Access-Control-Allow-Methods',
-    corsHeaders['Access-Control-Allow-Methods'],
-  );
-  response.headers.append(
-    'Access-Control-Allow-Headers',
-    corsHeaders['Access-Control-Allow-Headers'],
-  );
-  return response;
-}
-
 function jsonResponse<T>(data: T, status: number = 200): Response {
-  return handleCors(
-    new Response(JSON.stringify(data), {
-      status,
-      headers: { 'Content-Type': 'application/json' },
-    }),
-  );
+  const response = new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': corsHeaders['Access-Control-Allow-Origin'],
+      'Access-Control-Allow-Methods': corsHeaders['Access-Control-Allow-Methods'],
+      'Access-Control-Allow-Headers': corsHeaders['Access-Control-Allow-Headers'],
+    },
+  });
+  return response;
 }
 
 function errorResponse(message: string, status: number = 400): Response {
@@ -349,7 +340,14 @@ async function handleDelete(
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return handleCors(new Response(null, { status: 204 }));
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': corsHeaders['Access-Control-Allow-Origin'],
+        'Access-Control-Allow-Methods': corsHeaders['Access-Control-Allow-Methods'],
+        'Access-Control-Allow-Headers': corsHeaders['Access-Control-Allow-Headers'],
+      },
+    });
   }
 
   try {

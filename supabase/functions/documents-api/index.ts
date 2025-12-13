@@ -426,7 +426,7 @@ serve(async (req) => {
       }
 
       const limit = body.limit || 10;
-      const threshold = body.threshold || 0.5;
+      const threshold = body.threshold || 0.3;
 
       // Генерируем embedding для query
       let queryEmbedding: number[];

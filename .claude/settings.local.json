@@ -1,4 +1,5 @@
 {
+  "model": "haiku",
   "permissions": {
     "allow": [
       "Bash(git add:*)",
@@ -17,7 +18,9 @@
       "Bash(cat:*)",
       "Bash(ls:*)",
       "WebSearch",
-      "WebFetch(domain:supabase.com)"
+      "WebFetch(domain:supabase.com)",
+      "Bash(grep:*)",
+      "Bash(export SUPABASE_ACCESS_TOKEN='sbp_91472dbd3dff46fb192dfeca8e2c2712a3b4421d')"
     ],
     "deny": [],
     "ask": []

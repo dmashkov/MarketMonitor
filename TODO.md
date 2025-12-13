@@ -1,14 +1,16 @@
 # TODO List - MarketMonitor
 
-**Последнее обновление:** 7 декабря 2024
-**Версия:** 0.5.0
+**Последнее обновление:** 2025-12-13
+**Версия:** 0.6.0
+**Статус:** Phase 3 ✅ Complete, Phase 4 🚀 Starting
 **AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini + text-embedding-3-small)
 **Frontend:** Netlify Deploy
 **Architecture:** Multi-Agent System (8 specialized agents)
 
 **См. также:**
 - [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) - текущий статус
-- [AI_AGENTS_ARCHITECTURE.md](AI_AGENTS_ARCHITECTURE.md) - новая архитектура агентов
+- [PROGRESS.md](PROGRESS.md) - прогресс разработки
+- [AI_AGENTS_ARCHITECTURE.md](AI_AGENTS_ARCHITECTURE.md) - архитектура агентов
 - [ROADMAP.md](ROADMAP.md) - долгосрочный план
 
 ---
@@ -28,11 +30,11 @@
    - 🚫 НИКОГДА не использовать `any`, `unknown`
    - ✅ Все функции имеют явные параметры и return типы
    - ✅ Все API ответы типизированы через interface
-   - ✅ Zustand store полностью типизирован
+   - ✅ Edge Functions type-safe responses
 
 3. **OpenAI API** (не Claude!)
    - 🚫 НЕ использовать Anthropic Claude
-   - ✅ Использовать OpenAI (GPT-4 Turbo / GPT-4o)
+   - ✅ Использовать OpenAI (GPT-4o, GPT-4o-mini, text-embedding-3-small)
    - ✅ Переменная окружения: `OPENAI_API_KEY`
 
 4. **Netlify Deploy**
@@ -42,1400 +44,440 @@
 
 ---
 
-## 🔴 КРИТИЧЕСКИЙ ПРИОРИТЕТ (Week 1-2: Phase 3)
+## 🚀 PHASE 4: AI Agents Implementation (IN PROGRESS)
 
-### Migration 007: Новые таблицы
+### ✅ PHASE 3 ЗАВЕРШЕНА (Phase 3 Complete)
 
-- [ ] Создать файл `supabase/migrations/007_brands_and_documents.sql`
-- [ ] Таблица `brands`:
-  - [ ] Основная таблица (id, name, manufacturer, country, category, website_url)
-  - [ ] Триггер updated_at
-  - [ ] RLS policies (view для всех, manage для админов)
+**Дата:** 2025-12-12
 
-- [ ] Таблица `brand_segments`:
-  - [ ] Many-to-Many связь brands ↔ segments
-  - [ ] RLS policies
-
-- [ ] Таблица `documents`:
-  - [ ] Основные поля (title, description, document_type)
-  - [ ] Контент (content_text, content_html, file_url)
-  - [ ] Метаданные (source_id, published_date, brand_ids[], segment_ids[])
-  - [ ] **Embedding** VECTOR(1536) для семантического поиска
-  - [ ] Full-text search index (русский язык)
-  - [ ] Vector search index (ivfflat)
-  - [ ] RLS policies
-
-- [ ] Таблица `reports`:
-  - [ ] Основные поля (title, report_type, date_from, date_to)
-  - [ ] Контент (content_markdown, content_html)
-  - [ ] Файлы (pdf_url, docx_url, excel_url)
-  - [ ] RLS policies
-
-- [ ] Таблица `custom_prompts`:
-  - [ ] Поля: user_id, prompt_text, result_type, status
-  - [ ] Фильтры: brand_ids[], segment_ids[], geography_ids[]
-  - [ ] RLS policies (users see only own)
-
-- [ ] Обновить `events`:
-  - [ ] ADD COLUMN brand_id UUID
-  - [ ] ADD COLUMN document_id UUID
-  - [ ] ADD COLUMN criticality_reasoning TEXT
-  - [ ] ADD COLUMN criticality_factors TEXT[]
-
-- [ ] Создать `event_brands` (Many-to-Many):
-  - [ ] event_id, brand_id
-  - [ ] RLS policies
-
-- [ ] Seed данные для brands:
-  - [ ] 12+ брендов (Daikin, Midea, Haier, Ballu, etc.)
-  - [ ] Связи с сегментами через brand_segments
-
-- [ ] Применить миграцию через Supabase Dashboard
-- [ ] Проверить: pgvector extension включен
-
-### Supabase Storage Setup
-
-- [ ] Создать bucket `market-documents`
-- [ ] Настроить политики доступа:
-  - [ ] Authenticated users: READ
-  - [ ] Admins: READ, WRITE, DELETE
-  - [ ] Users: WRITE только в user-uploads/{user_id}/
-
-- [ ] Создать структуру папок:
-  ```
-  market-documents/
-  ├─ pdfs/2024/12/
-  ├─ presentations/2024/12/
-  └─ user-uploads/{user_id}/
-  ```
-
-### Migration 008: LLM Provider Management 🆕
-
-- [ ] Создать файл `supabase/migrations/008_llm_provider_management.sql`
-
-- [ ] Таблица `llm_providers`:
-  - [ ] Основные поля (name, code, api_endpoint)
-  - [ ] Шифрование API ключей (api_key_encrypted, api_key_last_4)
-  - [ ] Enable pgcrypto extension
-  - [ ] RLS policies (view для всех, manage для админов)
-  - [ ] Seed данные: OpenAI, Anthropic, Perplexity, Google
-
-- [ ] Таблица `llm_models`:
-  - [ ] Поля: provider_id, name, code, context_window
-  - [ ] Pricing: input_price_per_million, output_price_per_million
-  - [ ] Capabilities: supports_json_mode, supports_web_search
-  - [ ] recommended_for TEXT[]
-  - [ ] RLS policies
-  - [ ] Seed данные: GPT-4o, GPT-4o-mini, Claude Opus 4.5, Perplexity Sonar, Gemini 1.5
-
-- [ ] Таблица `llm_task_configs`:
-  - [ ] Поля: task_type, primary_model_id, fallback_model_id
-  - [ ] A/B testing: enable_ab_testing, ab_test_model_id, ab_test_percentage
-  - [ ] Параметры: temperature, max_tokens
-  - [ ] RLS policies
-  - [ ] Seed данные: конфигурации для web_search, event_extraction, criticality_scoring, etc.
-
-- [ ] Таблица `llm_usage_logs`:
-  - [ ] Метрики: prompt_tokens, completion_tokens, cost_usd
-  - [ ] Производительность: latency_ms
-  - [ ] A/B testing: was_ab_test, quality_score
-  - [ ] RLS policies (только админы читают)
-
-- [ ] Функции шифрования:
-  - [ ] `encrypt_api_key(api_key TEXT, encryption_key TEXT)`
-  - [ ] `decrypt_api_key(encrypted_api_key TEXT, encryption_key TEXT)`
-  - [ ] `decrypt_provider_api_key(provider_id UUID, encryption_key TEXT)`
-
-- [ ] Применить миграцию через Supabase Dashboard
-- [ ] Проверить: pgcrypto extension включен
-- [ ] Добавить ENCRYPTION_KEY в Supabase секреты
-
-### Supabase Setup (если еще не сделано)
-- [ ] Создать новый проект в https://supabase.com
-  - [ ] Зайти в Dashboard
-  - [ ] Нажать "New project"
-  - [ ] Заполнить детали (название, регион: Europe)
-  - [ ] Скопировать Project URL
-  - [ ] Скопировать Anon (public) Key
-
-- [ ] Заполнить файл `.env` в папке `frontend/`
-  ```
-  VITE_SUPABASE_URL=https://your-project.supabase.co
-  VITE_SUPABASE_ANON_KEY=your-anon-key-here
-  ```
-
-- [ ] Проверить подключение
-  ```bash
-  cd frontend
-  npm run dev
-  # Должен запуститься без ошибок
-  # Проверить в браузере: http://localhost:3000
-  ```
-
-- [ ] Получить Service Role Key
-  - [ ] В Supabase Dashboard: Settings > API
-  - [ ] Скопировать Service Role Key (для Edge Functions)
-  - [ ] Сохранить в безопасном месте (НЕ коммитить)
-
-### SQL Миграции (подготовка)
-- [ ] Создать папку `supabase/migrations/` (если не существует)
-- [ ] Подготовить шаблон миграции 001
-- [ ] Подготовить шаблон миграции 002
-- [ ] Подготовить шаблон миграции 003
-- [ ] Подготовить шаблон миграции 004
+✅ **Completed:**
+- [x] Migration 009: Documents table with pgvector
+- [x] Supabase Storage bucket configured
+- [x] 9 Edge Functions deployed
+- [x] 4 Admin Modules (Brands, Sources, Documents, Users)
+- [x] Full CRUD operations working
+- [x] RLS policies applied
+- [x] Type-safe code (NO ANY)
 
 ---
 
-## 🟡 ВЫСОКИЙ ПРИОРИТЕТ (Week 2-3: Phase 3)
+## 🔥 PHASE 4: IMMEDIATE TASKS (This Week)
 
-### Edge Functions - Общая настройка
+### 1️⃣ Documents Library Finalization (1-2 часа)
 
-#### Shared CORS Configuration (СДЕЛАТЬ ПЕРВЫМ!) ⚠️
+**Priority:** HIGH - Quick wins to complete Phase 3
 
-- [ ] Создать `supabase/functions/_shared/cors.ts`:
-  ```typescript
-  export const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  };
+#### A. Семантический поиск
+- [ ] Проверить RPC функцию `search_documents_by_embedding` в Supabase
+- [ ] Если нужна - создать в БД:
+  ```sql
+  CREATE OR REPLACE FUNCTION search_documents_by_embedding(
+    query_embedding vector(1536),
+    match_threshold float DEFAULT 0.7,
+    match_count int DEFAULT 10
+  )
   ```
+- [ ] Протестировать через DocumentsLibrary UI
+- [ ] Убедиться, что cosine similarity работает
 
-**ВАЖНО:**
-- ⚠️ **Supabase убрал настройки CORS из Dashboard** (2024-2025)
-- ✅ **CORS headers ОБЯЗАТЕЛЬНЫ в коде каждой функции**
-- ✅ **OPTIONS запрос ВСЕГДА должен обрабатываться ПЕРВЫМ**
-- ❌ **НЕТ** dropdown или input field в Dashboard для CORS
-- 📖 [Официальная документация](https://supabase.com/docs/guides/functions/cors)
+#### B. Просмотр файлов
+- [ ] Добавить кнопку "Скачать" в таблице документов
+  - Download icon + text
+  - Использовать file_url из Storage
+  - Open in new tab
+- [ ] Рендерить file_url как кликабельную ссылку
+- [ ] Иконка PDF/DOCX/PPTX рядом с названием (FilePdfOutlined, FileWordOutlined, etc.)
 
-**Шаблон для всех функций:**
+#### C. UX улучшения
+- [ ] Отображение размера файла в таблице (format bytes → KB/MB)
+- [ ] Добавить фильтр по document_type (PDF/DOCX/PPTX/HTML)
+- [ ] Превью первых 200 символов content_text в tooltip
+
+**Files to modify:**
+- `frontend/src/modules/admin/documents/DocumentsLibrary.tsx`
+- Add columns: fileSize, documentType
+- Add filters: documentType select
+- Add actions: Download button
+
+---
+
+### 2️⃣ Source Hunter Agent (2-3 часа)
+
+**Priority:** HIGH - Core Phase 4 functionality
+
+#### Edge Function: `supabase/functions/agents/source-hunter/index.ts`
+
+**Functionality:**
+- [ ] Accept POST request with:
+  - `prompt`: search query (e.g., "новые кондиционеры на рынке")
+  - `segment_ids[]`: optional filters
+  - `geography_ids[]`: optional filters
+  - `date_range_days`: optional (default: 7)
+
+- [ ] Query available sources from `sources` table
+- [ ] Build search queries for each source
+- [ ] Use OpenAI to generate web search queries
+- [ ] Execute searches (via OpenAI API or web scraping)
+- [ ] Extract URLs from results
+- [ ] Create documents in `documents` table:
+  - `title`: from search result
+  - `source_id`: from source
+  - `document_type`: "webpage"
+  - `file_url`: search result URL
+  - `published_date`: now()
+  - `content_text`: summary or headline
+- [ ] Queue for Document Processor Agent
+- [ ] Return: `{ status: "success", documents_created: N, urls: [...] }`
+
+**Implementation steps:**
+1. Create edge function folder
+2. Implement source selection logic
+3. Implement search query generation
+4. Implement document creation
+5. Test with Postman
+6. Handle errors properly
+
+**Type-safe interfaces:**
 ```typescript
-import { corsHeaders } from '../_shared/cors.ts';
+interface SourceHunterRequest {
+  prompt: string;
+  segment_ids?: string[];
+  geography_ids?: string[];
+  date_range_days?: number;
+}
 
-serve(async (req) => {
-  // ПЕРВЫМ делом обработать OPTIONS!
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
-  try {
-    // Ваша логика
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
-  }
-});
+interface SourceHunterResponse {
+  status: 'success' | 'error';
+  documents_created: number;
+  urls: string[];
+  error?: string;
+}
 ```
 
 ---
 
-### Edge Functions - Новые API
+### 3️⃣ Content Fetcher Agent (1-2 часа)
 
-#### Edge Function: brands-api (2-3 дня)
+**Priority:** HIGH - Depends on Source Hunter
 
-- [ ] Создать `supabase/functions/brands-api/index.ts`
-- [ ] GET /brands:
-  - [ ] Список всех брендов
-  - [ ] Фильтры: category, country, is_active
-  - [ ] Pagination (limit, offset)
-  - [ ] Сортировка по name
-  - [ ] Include segments (join brand_segments)
+#### Edge Function: `supabase/functions/agents/content-fetcher/index.ts`
 
-- [ ] GET /brands/:id:
-  - [ ] Детали бренда
-  - [ ] Связанные сегменты
-  - [ ] Статистика (количество событий)
+**Functionality:**
+- [ ] Accept POST request with:
+  - `document_id`: UUID
+  - `url`: string
+  - `source_type`: 'distributor' | 'manufacturer' | 'media' | 'website'
 
-- [ ] POST /brands (admin only):
-  - [ ] Валидация: name required, unique
-  - [ ] Создание бренда
-  - [ ] Автоматическое создание brand_segments
+- [ ] Fetch content from URL
+  - Use Deno fetch API
+  - Handle redirects
+  - Timeout: 10 seconds
 
-- [ ] PATCH /brands/:id (admin only):
-  - [ ] Обновление полей
-  - [ ] Обновление связей с сегментами
+- [ ] Parse HTML content
+  - Extract text from HTML (remove scripts, styles)
+  - Use cheerio or similar
+  - Extract title, description, main content
 
-- [ ] DELETE /brands/:id (admin only):
-  - [ ] Soft delete (is_active = false) или hard delete
-  - [ ] Cascade delete для brand_segments
+- [ ] Detect document type
+  - If PDF → extract text (pdfjs or similar)
+  - If Word → extract text
+  - If HTML → clean text extraction
 
-- [ ] POST /brands/:id/segments (admin only):
-  - [ ] Добавить связь с сегментом
-  - [ ] Валидация: segment существует
+- [ ] Save content to document:
+  - `content_html`: raw HTML
+  - `content_text`: cleaned text
+  - `title`: extracted title
+  - `meta_title`: from meta tags
+  - `meta_description`: from meta tags
 
-- [ ] DELETE /brands/:id/segments/:segment_id (admin only):
-  - [ ] Удалить связь с сегментом
-
-- [ ] Type-safe responses (NO any!)
-- [ ] Error handling
-- [ ] RLS проверка через Supabase client
-
-#### Edge Function: llm-providers-api (2 дня) 🆕
-
-- [ ] Создать `supabase/functions/llm-providers-api/index.ts`
-- [ ] GET /llm-providers:
-  - [ ] Список провайдеров (БЕЗ api_key_encrypted!)
-  - [ ] Include api_key_last_4 для отображения
-  - [ ] Фильтр: is_active
-
-- [ ] POST /llm-providers (admin only):
-  - [ ] Прием api_key в plaintext
-  - [ ] Шифрование через `encrypt_api_key()` RPC
-  - [ ] Сохранение api_key_last_4
-  - [ ] ВАЖНО: НЕ возвращать encrypted key в ответе
-
-- [ ] PATCH /llm-providers/:id/api-key (admin only):
-  - [ ] Обновление API ключа
-  - [ ] Re-encryption с новым ключом
-  - [ ] Обновление api_key_last_4
-
-- [ ] DELETE /llm-providers/:id (admin only):
-  - [ ] Cascade delete связанных моделей
-  - [ ] Проверка: нет активных task_configs
-
-- [ ] GET /llm-models:
-  - [ ] Список моделей с pricing
-  - [ ] Include provider details
-  - [ ] Фильтр: provider_id, is_active
-
-- [ ] GET /llm-task-configs:
-  - [ ] Список конфигураций задач
-  - [ ] Include primary/fallback/ab_test модели
-
-- [ ] PATCH /llm-task-configs/:task_type (admin only):
-  - [ ] Обновление primary_model_id, fallback_model_id
-  - [ ] Настройка A/B тестирования
-
-- [ ] GET /llm-usage-stats (admin only):
-  - [ ] Агрегированная статистика за 30 дней
-  - [ ] total_requests, total_cost_usd, total_tokens, avg_latency_ms
-
-- [ ] GET /llm-usage-logs (admin only):
-  - [ ] Последние N запросов
-  - [ ] Фильтры: task_type, model_id, status
-
-- [ ] Type-safe responses
-- [ ] Error handling
-- [ ] ENCRYPTION_KEY из env
-
-#### Edge Function: documents-api (2-3 дня)
-
-- [ ] Создать `supabase/functions/documents-api/index.ts`
-- [ ] GET /documents:
-  - [ ] Фильтры: document_type, date_from, date_to, brand_ids, segment_ids
-  - [ ] Full-text search (content_text)
-  - [ ] Pagination
-  - [ ] Сортировка по published_date DESC
-
-- [ ] GET /documents/:id:
-  - [ ] Детали документа
-  - [ ] Include related brands, segments, events
-
-- [ ] POST /documents (upload):
-  - [ ] Прием файлов (PDF, DOCX, PPTX)
-  - [ ] Upload в Supabase Storage
-  - [ ] Извлечение текста (используя библиотеки или API)
-  - [ ] Создание embedding через OpenAI
-  - [ ] Сохранение в БД
-  - [ ] Admin + User (only user-uploads/)
-
-- [ ] POST /documents/search (semantic search):
-  - [ ] Принимает текстовый запрос
-  - [ ] Создает embedding через OpenAI
-  - [ ] Ищет похожие документы (cosine similarity > 0.7)
-  - [ ] Возвращает топ-10
-
-- [ ] DELETE /documents/:id:
-  - [ ] Удаление из Storage
-  - [ ] Удаление из БД
-  - [ ] Admin или owner
-
-- [ ] Type-safe
-- [ ] OpenAI API integration для embeddings
-
-#### Edge Function: sources-api (доделать)
-
-- [ ] Доработать `supabase/functions/sources-api/index.ts`
-- [ ] GET /sources - DONE? (проверить)
-- [ ] POST /sources - добавить валидацию
-- [ ] PATCH /sources/:id - реализовать
-- [ ] DELETE /sources/:id - реализовать
-
-#### Edge Function: segments-api
-
-- [ ] Создать `supabase/functions/segments-api/index.ts`
-- [ ] GET /segments - список всех
-- [ ] POST /segments (admin only)
-- [ ] PATCH /segments/:id (admin only)
-- [ ] DELETE /segments/:id (admin only)
-
-#### Edge Function: geographies-api
-
-- [ ] Создать `supabase/functions/geographies-api/index.ts`
-- [ ] GET /geographies - список
-- [ ] GET /geographies/:id/children - дочерние зоны
-- [ ] POST /geographies (admin only)
-
-### TypeScript Types Update
-
-- [ ] Обновить `frontend/src/lib/types.ts`:
-  - [ ] Brand, BrandSegment
-  - [ ] Document, DocumentType
-  - [ ] Report, ReportType
-  - [ ] CustomPrompt
-  - [ ] Обновить MarketEvent (brand_id, document_id, criticality_reasoning)
-  - [ ] EventBrand (Many-to-Many)
-  - [ ] LLMProvider (name, code, api_key_last_4, is_active) 🆕
-  - [ ] LLMModel (provider_id, name, code, pricing, capabilities) 🆕
-  - [ ] LLMTaskConfig (task_type, primary_model_id, fallback_model_id, ab_testing) 🆕
-  - [ ] LLMUsageLog (model_id, task_type, tokens, cost_usd, latency_ms) 🆕
+- [ ] Queue for Document Processor
+- [ ] Return: extracted content
 
 ---
 
-## 🟠 СРЕДНИЙ ПРИОРИТЕТ (Week 3-4: Phase 3)
+### 4️⃣ Document Processor Agent (2-3 часа)
 
-### Frontend: Brands Management UI
+**Priority:** HIGH - Core processing
 
-#### BrandsManager.tsx (modules/admin/brands/)
+#### Edge Function: `supabase/functions/agents/document-processor/index.ts`
 
-- [ ] Создать `frontend/src/modules/admin/brands/BrandsManager.tsx`
-- [ ] Ant Design Table:
-  - [ ] Колонки: Name, Manufacturer, Country, Category, Active, Segments
-  - [ ] Фильтры: category (premium/middle/budget), country, active
-  - [ ] Поиск по названию
-  - [ ] Кнопка "+ Добавить бренд"
-  - [ ] Actions: Edit, Delete (admin only)
+**Functionality:**
+- [ ] Accept POST request with `document_id`
 
-- [ ] BrandFormModal.tsx:
-  - [ ] Форма создания/редактирования
-  - [ ] Поля: name*, manufacturer, country, category, website_url, logo_url, description
-  - [ ] Multi-select для сегментов (из справочника)
-  - [ ] Валидация через zod
-  - [ ] React Hook Form integration
+- [ ] Read document from database
+- [ ] Validate content exists (content_text or content_html)
 
-- [ ] Hooks:
-  - [ ] `useBrands()` - React Query hook (list + get by id)
-  - [ ] `useCreateBrand()` - mutation
-  - [ ] `useUpdateBrand()` - mutation
-  - [ ] `useDeleteBrand()` - mutation
-  - [ ] `useBrandSegments()` - управление связями
+- [ ] Text extraction
+  - If HTML → use cheerio to extract text
+  - Clean: remove extra whitespace, normalize encoding
+  - Truncate to max 5000 chars for embedding
 
-- [ ] Интеграция в AdminPanel (новая вкладка "Бренды")
+- [ ] Generate embedding
+  - Call OpenAI API: `text-embedding-3-small`
+  - Model: text-embedding-3-small
+  - Dimensions: 1536
+  - Save to `embedding` column (vector type)
 
-### Frontend: LLM Provider Management UI 🆕
+- [ ] Mentions extraction
+  - Extract brand mentions (from `brands` table)
+  - Extract segment mentions (from `segments` table)
+  - Extract geography mentions (from `geographies` table)
+  - Save to `mentioned_brands`, `mentioned_segments`, `mentioned_geographies`
 
-#### ProvidersManager.tsx (modules/admin/llm-config/)
+- [ ] Queue for Event Extractor
+- [ ] Return: `{ status: "success", embedding_generated: true }`
 
-- [ ] Создать `frontend/src/modules/admin/llm-config/ProvidersManager.tsx`
-- [ ] Таблица провайдеров:
-  - [ ] Колонки: Provider Name, Code, API Key Status, Last 4, Active
-  - [ ] API Key Status: ✅ Configured (green) или ❌ Not Set (red)
-  - [ ] Показывать только `********xxxx` (last 4 символа)
-  - [ ] Actions: "Добавить ключ" или "Изменить ключ"
-
-- [ ] ProviderApiKeyModal.tsx:
-  - [ ] 🔐 Безопасное окно ввода API ключа
-  - [ ] Alert с предупреждением о шифровании
-  - [ ] Input.Password component
-  - [ ] Показать текущий ключ: `********xxxx`
-  - [ ] Валидация: min 20 символов
-  - [ ] Ссылки на документацию провайдеров:
-    - [ ] OpenAI: https://platform.openai.com/api-keys
-    - [ ] Anthropic: https://console.anthropic.com/settings/keys
-    - [ ] Perplexity: https://www.perplexity.ai/settings/api
-
-- [ ] Hooks:
-  - [ ] `useProviders()` - список провайдеров
-  - [ ] `useUpdateProviderApiKey()` - mutation для обновления ключа
-
-#### LLMConfigManager.tsx (modules/admin/llm-config/)
-
-- [ ] Создать `frontend/src/modules/admin/llm-config/LLMConfigManager.tsx`
-- [ ] Таблица конфигураций задач:
-  - [ ] Колонки: Task Type, Description, Primary Model, Fallback, A/B Test
-  - [ ] Select для выбора модели (показывать цену)
-  - [ ] Switch для A/B тестирования
-  - [ ] InputNumber для процента A/B теста (1-50%)
-  - [ ] Temperature, max_tokens настройки
-
-- [ ] Hooks:
-  - [ ] `useTaskConfigs()` - список конфигураций
-  - [ ] `useModels()` - список доступных моделей
-  - [ ] `useUpdateTaskConfig()` - mutation
-
-#### LLMUsageStats.tsx (modules/admin/llm-config/)
-
-- [ ] Создать `frontend/src/modules/admin/llm-config/LLMUsageStats.tsx`
-- [ ] Карточки статистики (30 дней):
-  - [ ] Всего запросов (Statistic)
-  - [ ] Общая стоимость ($USD)
-  - [ ] Всего токенов
-  - [ ] Средняя задержка (ms)
-
-- [ ] Таблица последних запросов:
-  - [ ] Колонки: Task, Model, Tokens, Cost, Latency, Status
-  - [ ] Tag для status (green/red)
-  - [ ] Pagination (20 per page)
-  - [ ] Фильтры: task_type, model, status
-
-- [ ] Hooks:
-  - [ ] `useUsageStats()` - агрегированная статистика
-  - [ ] `useUsageLogs()` - последние запросы
-
-#### Интеграция в AdminPanel
-
-- [ ] Добавить новую вкладку "LLM Configuration" в AdminPanel
-- [ ] Sub-tabs:
-  - [ ] "Провайдеры" - ProvidersManager
-  - [ ] "Конфигурация задач" - LLMConfigManager
-  - [ ] "Статистика" - LLMUsageStats
-
-### Frontend: Documents Library UI
-
-#### DocumentsLibrary.tsx (modules/admin/documents/)
-
-- [ ] Создать `frontend/src/modules/admin/documents/DocumentsLibrary.tsx`
-- [ ] Таблица документов:
-  - [ ] Колонки: Title, Type, Published Date, Source, Brands, Actions
-  - [ ] Фильтры: document_type, date_range, brands, segments
-  - [ ] Full-text search input
-  - [ ] Semantic search input (отдельно)
-  - [ ] Preview PDF/DOCX через modal с iframe
-
-- [ ] DocumentUploader.tsx:
-  - [ ] Drag & Drop UI (react-dropzone)
-  - [ ] Поддержка: PDF, DOCX, PPTX
-  - [ ] Progress bar
-  - [ ] Автоматическая обработка:
-    - [ ] Upload в Storage
-    - [ ] Text extraction
-    - [ ] Embedding generation
-
-- [ ] DocumentViewer.tsx:
-  - [ ] Modal с iframe для PDF
-  - [ ] Отображение метаданных (brands, segments, geographies)
-  - [ ] Ссылка на источник
-
-- [ ] Hooks:
-  - [ ] `useDocuments()` - list
-  - [ ] `useDocumentUpload()` - upload с прогрессом
-  - [ ] `useSemanticSearch()` - семантический поиск
-  - [ ] `useDeleteDocument()` - удаление
-
-### Frontend: Custom Prompts Builder
-
-#### CustomPromptBuilder.tsx (modules/prompts/custom/)
-
-- [ ] Создать `frontend/src/modules/prompts/custom/CustomPromptBuilder.tsx`
-- [ ] Step-by-step wizard (3 шага):
-
-  **Шаг 1: Выбор цели**
-  - [ ] Radio buttons: "Найти события" / "Проанализировать тренды" / "Сравнить конкурентов"
-
-  **Шаг 2: Фильтры**
-  - [ ] Multi-select: Бренды (из справочника)
-  - [ ] Multi-select: Сегменты
-  - [ ] Multi-select: География
-  - [ ] Multi-select: Типы событий (promo, price, contract, etc.)
-  - [ ] Date Range Picker: Период
-
-  **Шаг 3: Дополнительные инструкции**
-  - [ ] Textarea для custom инструкций
-  - [ ] Preview сгенерированного промпта
-  - [ ] Checkbox: "Сохранить в библиотеку"
-  - [ ] Input: Название (если сохраняем)
-
-- [ ] Генерация промпта из параметров
-- [ ] Сохранение в custom_prompts
-- [ ] Запуск промпта (вызов Edge Function)
-
-- [ ] PromptLibrary.tsx:
-  - [ ] Список сохраненных промптов (where is_saved = true)
-  - [ ] Кнопка "Запустить"
-  - [ ] История выполнения (status, result_data)
-
-- [ ] Hooks:
-  - [ ] `useCustomPrompts()` - CRUD
-  - [ ] `useRunPrompt()` - запуск промпта
-
-### Frontend: Source Management UI (доделать)
-
-#### SourcesManager (modules/admin/sources/) - уже начато?
-
-- [ ] Проверить текущий статус SourcesManager
-- [ ] Доделать CRUD операции
-- [ ] Интеграция с brands (какие бренды продает источник)
+**Implementation notes:**
+- Embedding generation cost: ~$0.002 per 1K docs
+- Cache embeddings to avoid regeneration
+- Batch process if possible
 
 ---
 
-## 🔵 ОБЫЧНЫЙ ПРИОРИТЕТ (Week 5-6: Phase 4)
+### 5️⃣ Event Extractor Agent (3-4 часа)
 
-### AI Agents Implementation
+**Priority:** HIGH - Main business logic
 
-**См. детальный план:** [AI_AGENTS_ARCHITECTURE.md](AI_AGENTS_ARCHITECTURE.md)
+#### Edge Function: `supabase/functions/agents/event-extractor/index.ts`
 
-#### Shared Library: UniversalLLMClient 🆕 (СНАЧАЛА!)
+**Functionality:**
+- [ ] Accept POST request with `document_id`
 
-- [ ] Создать `supabase/functions/_shared/universal-llm-client.ts`
+- [ ] Read document content
+- [ ] If content > 2000 chars → chunk into 2000-char segments
 
-- [ ] Интерфейсы:
-  - [ ] `LLMRequest`: messages, temperature, max_tokens, response_format
-  - [ ] `LLMResponse`: content, usage, cost_usd, model, latency_ms
+- [ ] For each chunk, call OpenAI with extraction prompt:
+```
+Вы - аналитик рынка климатического оборудования.
+Извлеките рыночные события из текста.
+Каждое событие - отдельный JSON объект.
 
-- [ ] Класс `UniversalLLMClient`:
-  - [ ] Constructor(supabase, taskType, encryptionKey)
-  - [ ] `async call(request: LLMRequest): Promise<LLMResponse>`
-  - [ ] `selectModel(config)` - выбор primary или A/B модели
-  - [ ] `getTaskConfig()` - получение конфигурации задачи из БД
-  - [ ] `getModelAndProvider(modelId)` - получение модели + провайдера
-  - [ ] `decryptApiKey(providerId)` - расшифровка через RPC
+Формат:
+{
+  "title": "название события",
+  "description": "описание",
+  "event_type": "promo|price|contract|product|acquisition|partnership|regulatory",
+  "company": "компания",
+  "geography": "регион",
+  "channel": "B2B|B2G|B2C",
+  "relevance_score": 1-5,
+  "mentioned_brands": ["Daikin", "Midea"],
+  "mentioned_segments": ["RAC", "VRF"],
+  "reasoning": "почему это важно"
+}
 
-- [ ] Провайдеры:
-  - [ ] `callOpenAI(model, apiKey, request, config)` - OpenAI SDK
-  - [ ] `callAnthropic(model, apiKey, request, config)` - Anthropic SDK
-  - [ ] `callPerplexity(model, apiKey, request, config)` - Fetch API
-  - [ ] `callGoogle(model, apiKey, request, config)` - TODO
+Текст:
+{content}
 
-- [ ] Утилиты:
-  - [ ] `calculateCost(model, promptTokens, completionTokens)` - расчет стоимости
-  - [ ] `logUsage(model, response, status)` - логирование в llm_usage_logs
-  - [ ] `logError(errorMessage, latency_ms)` - логирование ошибок
+JSON массив или пусто если событий нет.
+```
 
-- [ ] Fallback mechanism:
-  - [ ] При ошибке primary модели → попытка fallback
-  - [ ] Логирование использования fallback
+- [ ] Parse JSON responses (with validation)
+- [ ] Validate events:
+  - Required fields: title, description, event_type
+  - Company must exist or create
+  - Reject if relevance_score < 2
 
-- [ ] Type-safe (NO any!)
-- [ ] Error handling для каждого провайдера
-- [ ] ВАЖНО: Расшифровка API ключа только server-side
+- [ ] Save events to `events` table:
+  - `title`, `description`, `event_type`
+  - `company`, `geography`, `channel`
+  - `source_id`, `document_id` (links)
+  - `mentioned_brands`, `mentioned_segments`
+  - `raw_data`: full OpenAI response (JSONB)
 
-#### Orchestrator (Week 1)
+- [ ] Return: `{ status: "success", events_created: N }`
 
-- [ ] Создать `supabase/functions/orchestrator/index.ts`
-- [ ] Логика запуска промптов по расписанию
-- [ ] Интеграция с search_runs
-- [ ] Error handling и retry logic
-
-#### Agents: Data Collection (Week 1-2)
-
-- [ ] Agent 1: Source Hunter (`agents/source-hunter/index.ts`)
-  - [ ] Определение приоритетных источников
-  - [ ] Построение веб-поисковых запросов
-
-- [ ] Agent 2: Content Fetcher (`agents/content-fetcher/index.ts`)
-  - [ ] Прямой fetch источников
-  - [ ] OpenAI Web Search integration
-  - [ ] Error handling для недоступных источников
-
-- [ ] Agent 3: Document Processor (`agents/document-processor/index.ts`)
-  - [ ] Upload в Supabase Storage
-  - [ ] Text extraction (PDF, PPTX)
-  - [ ] HTML → clean text
-  - [ ] Embedding generation
-  - [ ] Mentions extraction (brands, segments, geographies)
-  - [ ] Сохранение в documents table
-
-#### Agents: Event Processing (Week 2-3)
-
-- [ ] Agent 4: Event Extractor (`agents/event-extractor/index.ts`)
-  - [ ] Извлечение событий из текста
-  - [ ] Chunking для длинных документов
-  - [ ] Промпт инжиниринг для точности
-
-- [ ] Agent 6: Criticality Scorer (`agents/criticality-scorer/index.ts`)
-  - [ ] Batch processing (10 событий)
-  - [ ] Промпт с 5-уровневой шкалой
-  - [ ] Reasoning + factors
-
-- [ ] Agent 7: Duplicate Detector (`agents/duplicate-detector/index.ts`)
-  - [ ] Cosine similarity через embeddings
-  - [ ] Merge logic
-  - [ ] Threshold: similarity > 0.85
-
-#### Agents: Reporting & Alerts (Week 3)
-
-- [ ] Report Generator (`agents/report-generator/index.ts`)
-  - [ ] Daily Digest
-  - [ ] Weekly Analytics
-  - [ ] Monthly Summary
-  - [ ] Export в PDF/DOCX
-
-- [ ] Alert Manager (`agents/alert-manager/index.ts`)
-  - [ ] Telegram bot setup
-  - [ ] Email notifications
-  - [ ] In-app alerts (таблица alerts в БД)
-
-#### Custom Prompt Runner
-
-- [ ] `agents/custom-prompt-runner/index.ts`
-  - [ ] Запуск кастомных промптов
-  - [ ] Определение: нужен новый поиск или достаточно БД
-  - [ ] Генерация отчета
-
-#### Testing & Integration
-
-- [ ] End-to-end тесты полного pipeline
-- [ ] Performance optimization
-- [ ] Cost optimization (caching, batching)
+**Cost optimization:**
+- Batch 5-10 documents at once
+- Use gpt-4o-mini for cost savings
+- Cache embeddings to reduce API calls
 
 ---
 
-## ⚪ НИЗКИЙ ПРИОРИТЕТ (Phase 5: Production)
+## 🟡 PHASE 4: SECONDARY TASKS (Next 1-2 weeks)
 
-### GitHub Actions Cron
+### 6️⃣ Criticality Scorer Agent
 
-- [ ] Создать `.github/workflows/daily-search.yml`
-- [ ] Schedule: `0 9 * * *` (09:00 UTC = 12:00 MSK)
-- [ ] Trigger Orchestrator Edge Function
-- [ ] Environment variables setup
+- [ ] Edge Function: `agents/criticality-scorer/index.ts`
+- [ ] Batch process 10 events at once
+- [ ] Score 1-5 scale
+- [ ] Save reasoning and factors
+- [ ] Update events table
+
+### 7️⃣ Duplicate Detector Agent
+
+- [ ] Edge Function: `agents/duplicate-detector/index.ts`
+- [ ] Cosine similarity search
+- [ ] Merge similar events
+- [ ] Threshold: 0.85
+
+### 8️⃣ Alert Manager Agent
+
+- [ ] Edge Function: `agents/alert-manager/index.ts`
+- [ ] Telegram bot integration
+- [ ] Email notifications
+- [ ] In-app alerts table
+
+### 9️⃣ Report Generator Agent
+
+- [ ] Edge Function: `agents/report-generator/index.ts`
+- [ ] Daily/Weekly/Monthly reports
+- [ ] Export to PDF/DOCX
+- [ ] Save to reports table
+
+### 🔟 Orchestrator
+
+- [ ] Edge Function: `agents/orchestrator/index.ts`
+- [ ] Coordinate all agents
+- [ ] Error handling + retry logic
+- [ ] Progress tracking
+
+---
+
+## 🟠 PHASE 4: FRONTEND TASKS (Next 2 weeks)
+
+### Custom Prompt Builder UI
+
+- [ ] Create `modules/prompts/custom/CustomPromptBuilder.tsx`
+- [ ] 3-step wizard
+- [ ] Step 1: Select goal (find events / analyze trends / compare)
+- [ ] Step 2: Filters (brands, segments, geography, date range)
+- [ ] Step 3: Custom instructions + preview
+- [ ] Save & run functionality
+
+### Events Display Updates
+
+- [ ] Add source tracking column
+- [ ] Add criticality badges (color-coded 1-5)
+- [ ] Add filtering by criticality
+- [ ] Add event source URL link
+
+### Reports Viewer
+
+- [ ] Display saved reports
+- [ ] Filter by date range
+- [ ] Export options (PDF, DOCX)
+- [ ] Report previews
+
+---
+
+## ⚪ PHASE 5: FUTURE TASKS (Next 3-4 weeks)
+
+### GitHub Actions Automation
+
+- [ ] Create `.github/workflows/daily-search.yml`
+- [ ] Schedule: `0 9 * * *` (09:00 UTC)
+- [ ] Trigger orchestrator
+- [ ] Environment setup
 
 ### Monitoring & Logging
 
-- [ ] Supabase logs monitoring
-- [ ] Error tracking (Sentry?)
-- [ ] Performance metrics
+- [ ] Implement Sentry or similar
+- [ ] Track error rates
+- [ ] Monitor token usage
+- [ ] Track cost per day
 
-### User Testing & Polish
+### Performance Optimization
 
-- [ ] User acceptance testing
-- [ ] Bug fixes
-- [ ] UI/UX improvements
-- [ ] Mobile responsiveness
+- [ ] Profile API calls
+- [ ] Optimize embedding generation
+- [ ] Cache results
+- [ ] Batch processing
 
-### Documentation
+### Testing
 
-- [ ] User Guide
-- [ ] Admin Guide
-- [ ] API Documentation
-
----
-
-## 🗑️ УДАЛЕННЫЕ СЕКЦИИ (устаревшие)
-
-<details>
-<summary>Старые миграции (001-004) - уже применены ✅</summary>
-
-#### Миграция 001: Initial Schema (APPLIED ✅)
-- [ ] Создать файл `supabase/migrations/001_initial_schema.sql`
-- [ ] Создать таблицу `events`:
-  ```sql
-  CREATE TABLE events (
-    id UUID PRIMARY KEY,
-    date DATE,
-    segment TEXT,
-    geography TEXT,
-    channel TEXT CHECK (channel IN ('B2B', 'B2G', 'B2C')),
-    event_type TEXT,
-    company TEXT,
-    description TEXT,
-    criticality INTEGER CHECK (criticality >= 1 AND criticality <= 5),
-    source_url TEXT,
-    raw_data JSONB,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-  );
-  ```
-
-- [ ] Создать таблицу `ai_prompts`:
-  ```sql
-  CREATE TABLE ai_prompts (
-    id UUID PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,
-    description TEXT,
-    prompt_template TEXT,
-    search_type TEXT,
-    is_active BOOLEAN DEFAULT true,
-    parameters JSONB,
-    created_by UUID,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-  );
-  ```
-
-- [ ] Создать таблицу `search_runs`:
-  ```sql
-  CREATE TABLE search_runs (
-    id UUID PRIMARY KEY,
-    prompt_id UUID REFERENCES ai_prompts(id),
-    status TEXT CHECK (status IN ('running', 'completed', 'failed')),
-    events_found INTEGER,
-    parameters_used JSONB,
-    error_message TEXT,
-    triggered_by UUID,
-    is_scheduled BOOLEAN,
-    started_at TIMESTAMP,
-    completed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW()
-  );
-  ```
-
-- [ ] Применить миграцию через Supabase Dashboard или CLI
-- [ ] Проверить: таблицы появились в Database > Tables
-
-#### Миграция 002: User Profiles
-- [ ] Создать файл `supabase/migrations/002_user_profiles.sql`
-- [ ] Создать таблицу `user_profiles`:
-  ```sql
-  CREATE TABLE user_profiles (
-    id UUID REFERENCES auth.users(id) PRIMARY KEY,
-    email TEXT NOT NULL,
-    full_name TEXT,
-    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user')),
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    created_by UUID REFERENCES auth.users(id)
-  );
-  ```
-
-- [ ] Создать триггер для создания профиля при регистрации:
-  ```sql
-  CREATE OR REPLACE FUNCTION handle_new_user()
-  RETURNS TRIGGER AS $$
-  BEGIN
-    INSERT INTO user_profiles (id, email, role)
-    VALUES (NEW.id, NEW.email, 'user');
-    RETURN NEW;
-  END;
-  $$ LANGUAGE plpgsql SECURITY DEFINER;
-
-  CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION handle_new_user();
-  ```
-
-- [ ] Применить миграцию
-- [ ] Проверить: таблица user_profiles создана
-
-#### Миграция 003: Job Schedules
-- [ ] Создать файл `supabase/migrations/003_job_schedules.sql`
-- [ ] Создать таблицу `job_schedules`:
-  ```sql
-  CREATE TABLE job_schedules (
-    id UUID PRIMARY KEY,
-    prompt_id UUID REFERENCES ai_prompts(id),
-    name TEXT,
-    cron_expression TEXT,
-    is_active BOOLEAN DEFAULT true,
-    parameters JSONB,
-    last_run_at TIMESTAMP,
-    next_run_at TIMESTAMP,
-    last_run_status TEXT,
-    created_by UUID REFERENCES auth.users(id),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-  );
-  ```
-
-- [ ] Применить миграцию
-- [ ] Проверить: таблица job_schedules создана
-
-#### Миграция 004: RLS Policies
-- [ ] Создать файл `supabase/migrations/004_rls_policies.sql`
-
-- [ ] Включить RLS для всех таблиц:
-  ```sql
-  ALTER TABLE events ENABLE ROW LEVEL SECURITY;
-  ALTER TABLE ai_prompts ENABLE ROW LEVEL SECURITY;
-  ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-  ALTER TABLE job_schedules ENABLE ROW LEVEL SECURITY;
-  ALTER TABLE search_runs ENABLE ROW LEVEL SECURITY;
-  ```
-
-- [ ] Создать RLS policies для `events`:
-  ```sql
-  -- Все авторизованные пользователи могут читать
-  CREATE POLICY "Users can view events"
-    ON events FOR SELECT
-    TO authenticated
-    USING (true);
-
-  -- Только админы могут модифицировать
-  CREATE POLICY "Only admins can modify events"
-    ON events FOR ALL
-    TO authenticated
-    USING (EXISTS (
-      SELECT 1 FROM user_profiles
-      WHERE id = auth.uid() AND role = 'admin'
-    ));
-  ```
-
-- [ ] Создать RLS policies для `ai_prompts`:
-  - [ ] Select: все авторизованные
-  - [ ] Insert/Update/Delete: только админы
-
-- [ ] Создать RLS policies для `user_profiles`:
-  - [ ] Select own: каждый может видеть свой профиль
-  - [ ] Select all: админы видят все
-  - [ ] Modify: только админы
-
-- [ ] Создать RLS policies для `job_schedules`:
-  - [ ] Select: все авторизованные
-  - [ ] Modify: только админы
-
-- [ ] Применить миграцию
-- [ ] Проверить: в Database > Policies видны все policies
-
-### Модуль авторизации (Frontend)
-
-#### useAuth Hook
-- [ ] Создать файл `frontend/src/hooks/useAuth.ts`
-- [ ] Функция для получения текущей сессии
-- [ ] Функция для получения профиля пользователя
-- [ ] Функция для проверки роли (isAdmin)
-- [ ] Функция для логина
-- [ ] Функция для логаута
-- [ ] Экспортировать как hook
-
-#### ProtectedRoute Компонент
-- [ ] Создать файл `frontend/src/components/auth/ProtectedRoute.tsx`
-- [ ] Проверка наличия сессии
-- [ ] Редирект на /login если нет сессии
-- [ ] Отображение Loading state во время загрузки
-- [ ] Рендер children если аутентифицирован
-
-#### RequireRole Компонент
-- [ ] Создать файл `frontend/src/components/auth/RequireRole.tsx`
-- [ ] Проверка роли пользователя
-- [ ] Редирект на /unauthorized если нет прав
-- [ ] Поддержка нескольких ролей
-
-#### Login Page Компонент
-- [ ] Создать файл `frontend/src/pages/auth/LoginPage.tsx`
-- [ ] Email поле
-- [ ] Password поле
-- [ ] Кнопка "Войти"
-- [ ] Ссылка на "Регистрация"
-- [ ] Обработка ошибок
-- [ ] Интеграция с Supabase Auth
-- [ ] Редирект на Dashboard после успешного входа
-
-#### Register Page Компонент
-- [ ] Создать файл `frontend/src/pages/auth/RegisterPage.tsx`
-- [ ] Email поле
-- [ ] Password поле
-- [ ] Confirm password поле
-- [ ] Full name поле (опционально)
-- [ ] Кнопка "Зарегистрироваться"
-- [ ] Ссылка на "Вход"
-- [ ] Валидация паролей (совпадение)
-- [ ] Интеграция с Supabase Auth
-- [ ] Сообщение об отправке письма
-
-#### Dashboard Страница
-- [ ] Создать файл `frontend/src/pages/DashboardPage.tsx`
-- [ ] Приветствие пользователя (Hello, [name]!)
-- [ ] Информация о текущей сессии
-- [ ] Ссылки на основные разделы
-- [ ] Кнопка выхода (logout)
-- [ ] Для админов: ссылка на admin panel
-
-#### Тестирование Auth
-- [ ] Регистрация с новым email
-- [ ] Вход с созданным аккаунтом
-- [ ] Проверка: redirects to dashboard
-- [ ] Logout функция
-- [ ] Попытка доступа к protected route без сессии
-- [ ] Проверка: redirects to login
+- [ ] E2E tests for full pipeline
+- [ ] Load testing (embeddings)
+- [ ] Cost analysis
+- [ ] Quality assessment
 
 ---
 
-## 🟠 СРЕДНИЙ ПРИОРИТЕТ (Неделя 2)
+## 📋 COMPLETED ✅
 
-### Admin Функционал: User Management
+### Phase 1: Foundation
+- [x] React 18 + TypeScript setup
+- [x] Tailwind CSS + Ant Design
+- [x] Documentation
 
-#### User List Компонент
-- [ ] Создать `frontend/src/pages/admin/UsersPage.tsx`
-- [ ] Таблица со всеми пользователями:
-  - [ ] Колонка: Email
-  - [ ] Колонка: Имя
-  - [ ] Колонка: Роль (admin/user)
-  - [ ] Колонка: Статус (активен/неактивен)
-  - [ ] Колонка: Дата создания
-  - [ ] Колонка: Действия (edit, delete)
+### Phase 2: MVP
+- [x] Authentication (login, register, protected routes)
+- [x] Events CRUD
+- [x] 4 SQL migrations (001-004)
+- [x] RLS policies
 
-- [ ] Фильтры:
-  - [ ] По роли (admin, user)
-  - [ ] По статусу (активные, неактивные)
-  - [ ] Поиск по email
-
-- [ ] Кнопка "+ Добавить пользователя"
-- [ ] Pagination (20-50 на странице)
-- [ ] Loading state
-
-#### User Create/Edit Form
-- [ ] Создать `frontend/src/components/admin/UserForm.tsx`
-- [ ] Email поле (read-only при редактировании)
-- [ ] Full name поле
-- [ ] Role select (admin/user)
-- [ ] Кнопка сохранения
-- [ ] Кнопка отмены
-- [ ] Валидация формы
-- [ ] Обработка ошибок
-
-#### User API Calls
-- [ ] Создать `frontend/src/hooks/useUsers.ts`
-- [ ] getUsers() - получить список
-- [ ] getUserById(id) - получить одного
-- [ ] createUser(data) - создать (вызывает Edge Function)
-- [ ] updateUser(id, data) - обновить роль/статус
-- [ ] deleteUser(id) - удалить (soft delete)
-
-#### Create User Edge Function
-- [ ] Создать `supabase/functions/create-user/index.ts`
-- [ ] Проверка: только админы могут вызывать
-- [ ] Валидация email
-- [ ] Создание пользователя в auth.users
-- [ ] Создание профиля в user_profiles
-- [ ] Отправка приглашения (опционально)
-- [ ] Обработка ошибок
-
-### Admin Функционал: Prompt Library
-
-#### Prompt List Компонент
-- [ ] Создать `frontend/src/pages/admin/PromptsPage.tsx`
-- [ ] Список промптов (карточки или таблица):
-  - [ ] Название
-  - [ ] Описание
-  - [ ] Тип поиска
-  - [ ] Статус (активен/неактивен)
-  - [ ] Действия (edit, test, delete)
-
-- [ ] Кнопка "+ Новый промпт"
-- [ ] Фильтр по статусу (активные/все)
-- [ ] Поиск по названию
-
-#### Prompt Editor Компонент
-- [ ] Создать `frontend/src/components/admin/PromptEditor.tsx`
-- [ ] Поле: Название
-- [ ] Поле: Описание
-- [ ] Поле: Тип поиска (select)
-- [ ] Textarea: Шаблон промпта с переменными
-- [ ] Поле: Параметры (JSON editor или form)
-- [ ] Toggle: Активен/неактивен
-- [ ] Кнопка: Сохранить
-- [ ] Кнопка: Отмена
-
-#### Prompt Tester Компонент
-- [ ] Создать `frontend/src/components/admin/PromptTester.tsx`
-- [ ] Отображение текущего промпта
-- [ ] Форма для ввода значений переменных
-- [ ] Кнопка "Тестировать"
-- [ ] Отображение результатов (JSON)
-- [ ] Индикатор загрузки
-- [ ] Обработка ошибок
-
-#### Prompt API Calls
-- [ ] Создать `frontend/src/hooks/usePrompts.ts`
-- [ ] getPrompts() - список
-- [ ] getPromptById(id) - получить один
-- [ ] createPrompt(data) - создать
-- [ ] updatePrompt(id, data) - обновить
-- [ ] deletePrompt(id) - удалить
-- [ ] testPrompt(id, params) - тестировать
-
-### Admin Функционал: Job Scheduler
-
-#### Schedule List Компонент
-- [ ] Создать `frontend/src/pages/admin/SchedulerPage.tsx`
-- [ ] Таблица/карточки со всеми расписаниями:
-  - [ ] Название
-  - [ ] Промпт
-  - [ ] Cron выражение (в человеческом виде)
-  - [ ] Статус (активен/неактивен)
-  - [ ] Последний запуск
-  - [ ] Следующий запуск
-  - [ ] Действия (edit, run now, delete)
-
-- [ ] Кнопка "+ Новое расписание"
-- [ ] История выполнения (таблица search_runs)
-
-#### Cron Builder Компонент
-- [ ] Создать `frontend/src/components/admin/CronBuilder.tsx`
-- [ ] Presets (ежедневно, еженедельно, etc.)
-- [ ] Визуальный UI для выбора времени
-- [ ] Дни недели (пн-вс)
-- [ ] Время (часы, минуты)
-- [ ] Превью: "Следующие 5 запусков"
-- [ ] Экспорт в cron выражение
-
-#### Schedule Editor Компонент
-- [ ] Создать `frontend/src/components/admin/ScheduleEditor.tsx`
-- [ ] Выбор промпта (select)
-- [ ] Поле: Название
-- [ ] Cron builder
-- [ ] Параметры для подстановки
-- [ ] Кнопка: Сохранить
-
-#### Execution History Компонент
-- [ ] Создать `frontend/src/components/admin/ExecutionHistory.tsx`
-- [ ] Таблица с поисками (search_runs):
-  - [ ] Дата/время запуска
-  - [ ] Статус (success/failed)
-  - [ ] Найдено событий
-  - [ ] Время выполнения
-  - [ ] Ошибка (если failed)
-
-#### Schedule API Calls
-- [ ] Создать `frontend/src/hooks/useSchedules.ts`
-- [ ] getSchedules()
-- [ ] getScheduleById(id)
-- [ ] createSchedule(data)
-- [ ] updateSchedule(id, data)
-- [ ] deleteSchedule(id)
-- [ ] runScheduleNow(id) - запустить сейчас
-
-### AI Search Edge Function
-
-#### Edge Function: ai-search
-- [ ] Создать `supabase/functions/ai-search/index.ts`
-- [ ] Параметры: prompt_id, parameters
-- [ ] Проверка прав доступа (только админы и auth)
-- [ ] Загрузка промпта из БД
-- [ ] Заполнение шаблона параметрами
-- [ ] Вызов OpenAI API (GPT-4 Turbo / GPT-4o)
-  - [ ] Инициализация клиента с `OPENAI_API_KEY`
-  - [ ] Правильный prompt format для JSON
-  - [ ] Парсинг результатов в JSON (TYPE-SAFE!)
-  - [ ] Валидация результатов (type guards)
-- [ ] Сохранение событий в таблицу `events`
-- [ ] Обновление `search_runs`:
-  - [ ] Статус: completed
-  - [ ] events_found: количество
-  - [ ] completed_at: время
-- [ ] Обработка ошибок:
-  - [ ] Запись статуса: failed
-  - [ ] Запись error_message
-- [ ] Возврат результатов в Frontend
-
-#### Manual Search Runner (Admin UI)
-- [ ] Создать `frontend/src/pages/admin/SearchRunnerPage.tsx`
-- [ ] Выбор промпта (select)
-- [ ] Форма с параметрами:
-  - [ ] date_range_days
-  - [ ] segments (multi-select)
-  - [ ] geographies
-  - [ ] channels (checkboxes)
-  - [ ] Прочие параметры
-
-- [ ] Кнопка "Запустить поиск"
-- [ ] Real-time мониторинг выполнения
-- [ ] Таблица найденных событий
-- [ ] Обработка ошибок
+### Phase 3: Admin UI
+- [x] Database migrations (005-009)
+- [x] Supabase Storage setup
+- [x] 9 Edge Functions (brands, sources, documents, users, segments, geographies)
+- [x] Brands Management module
+- [x] Sources Management module
+- [x] Documents Library module
+- [x] Users Management module
+- [x] AdminPanel with 4 tabs
+- [x] Full CRUD operations
+- [x] Type-safe code (NO ANY)
+- [x] RLS policies applied
+- [x] CORS headers configured
 
 ---
 
-## 🔵 ОБЫЧНЫЙ ПРИОРИТЕТ (Неделя 3)
+## 🎯 PRIORITY MATRIX
 
-### User Функционал: Events Display
+### 🔴 CRITICAL (Must do this week)
+1. Document Library finalization (1-2h)
+2. Source Hunter Agent (2-3h)
+3. Content Fetcher Agent (1-2h)
+4. Document Processor Agent (2-3h)
 
-#### Events Table Компонент
-- [ ] Создать `frontend/src/components/shared/EventsTable.tsx`
-- [ ] Таблица (Ant Design Table):
-  - [ ] Колонка: Дата
-  - [ ] Колонка: Компания
-  - [ ] Колонка: Сегмент
-  - [ ] Колонка: Тип события
-  - [ ] Колонка: Описание (первые 100 символов)
-  - [ ] Колонка: Критичность (звезды)
-  - [ ] Колонка: Канал
+### 🟡 HIGH (Should do this week)
+5. Event Extractor Agent (3-4h)
+6. Criticality Scorer (Next week)
+7. Frontend updates (Next week)
 
-- [ ] Функции таблицы:
-  - [ ] Пагинация (по умолчанию 50)
-  - [ ] Сортировка по колонкам
-  - [ ] Выделение строки (hover)
-  - [ ] Click: открыть детали
+### 🟠 MEDIUM (Next 1-2 weeks)
+- Duplicate Detector
+- Alert Manager
+- Report Generator
+- Orchestrator
 
-#### Events Filters Компонент
-- [ ] Создать `frontend/src/components/shared/EventFilters.tsx`
-- [ ] Date range picker (от/до)
-- [ ] Segment multi-select
-- [ ] Event type multi-select
-- [ ] Company search (autocomplete)
-- [ ] Channel checkboxes (B2B, B2G, B2C)
-- [ ] Criticality slider (1-5)
-- [ ] Кнопка "Применить фильтры"
-- [ ] Кнопка "Очистить"
-
-#### Events Detail Modal
-- [ ] Создать `frontend/src/components/shared/EventDetail.tsx`
-- [ ] Отображение всей информации события
-- [ ] Форматирование даты
-- [ ] Ссылка на источник (кликабельная)
-- [ ] Действия:
-  - [ ] Закрыть modal
-  - [ ] Для админов: Edit, Delete
-
-#### Events Page
-- [ ] Создать `frontend/src/pages/EventsPage.tsx`
-- [ ] EventFilters компонент (в sidebar или top)
-- [ ] EventsTable компонент (основная часть)
-- [ ] Индикатор загрузки
-- [ ] Обработка пустого списка
-- [ ] Обработка ошибок
-
-#### Events API Calls
-- [ ] Создать `frontend/src/hooks/useEvents.ts`
-- [ ] getEvents(filters, page, limit)
-- [ ] getEventById(id)
-- [ ] createEvent(data) - только для Edge Function
-- [ ] updateEvent(id, data) - только админы
-- [ ] deleteEvent(id) - только админы
-
-### User Функционал: Analytics & Dashboard
-
-#### Dashboard Компонент
-- [ ] Создать `frontend/src/components/shared/Dashboard.tsx`
-- [ ] KPI Cards (4 карточки):
-  - [ ] Всего событий
-  - [ ] За последний месяц
-  - [ ] Средняя критичность
-  - [ ] Уникальные компании
-
-#### Event Type Chart
-- [ ] Создать `frontend/src/components/shared/Charts/EventTypeChart.tsx`
-- [ ] Pie chart (Recharts)
-- [ ] Распределение событий по типам
-- [ ] Легенда с процентами
-
-#### Activity Timeline Chart
-- [ ] Создать `frontend/src/components/shared/Charts/ActivityChart.tsx`
-- [ ] Line chart (Recharts)
-- [ ] X-ось: дни/недели
-- [ ] Y-ось: количество событий
-- [ ] Выбор периода (7 дней, месяц, квартал)
-
-#### Company Ranking Chart
-- [ ] Создать `frontend/src/components/shared/Charts/CompanyChart.tsx`
-- [ ] Bar chart (горизонтальный)
-- [ ] Топ-10 компаний по активности
-- [ ] Сортировка по количеству событий
-
-#### Criticality Distribution Chart
-- [ ] Создать `frontend/src/components/shared/Charts/CriticalityChart.tsx`
-- [ ] Bar chart
-- [ ] Распределение по уровню критичности (1-5)
-- [ ] Количество событий для каждого уровня
-
-#### Dashboard Page
-- [ ] Создать `frontend/src/pages/DashboardPage.tsx`
-- [ ] Layout с фильтрами и графиками
-- [ ] Date range picker для фильтрации
-- [ ] Grid с 4 KPI cards
-- [ ] 4 разных графика (разные разновидности)
-- [ ] Responsive дизайн (mobile-friendly)
-
-### User Функционал: Reports & Export
-
-#### Report Export Компонент
-- [ ] Создать `frontend/src/components/shared/ReportExport.tsx`
-- [ ] Выбор формата:
-  - [ ] Excel
-  - [ ] CSV
-  - [ ] PDF (опционально)
-
-- [ ] Выбор периода (дата от/до)
-- [ ] Выбор колонок для экспорта
-- [ ] Применение текущих фильтров (чекбокс)
-- [ ] Кнопка "Скачать отчет"
-
-#### Excel Export Функция
-- [ ] Установить библиотеку: `npm install xlsx`
-- [ ] Функция `exportToExcel(events, filename)`
-- [ ] Форматирование:
-  - [ ] Заголовок с bold и background
-  - [ ] Числа в правильном формате
-  - [ ] Даты в формате DD.MM.YYYY
-  - [ ] Автоширина колонок
-  - [ ] Замороженная строка заголовков
-
-#### CSV Export Функция
-- [ ] Функция `exportToCSV(events, filename)`
-- [ ] Простой CSV без форматирования
-- [ ] UTF-8 encoding
-- [ ] Все данные как text
-
-#### AI Summary Feature
-- [ ] Создать `frontend/src/components/shared/AISummary.tsx`
-- [ ] Кнопка "Получить AI анализ"
-- [ ] Modal с формой:
-  - [ ] Дата от/до
-  - [ ] Выбранные сегменты
-- [ ] Edge Function вызов: `ai-summarize`
-- [ ] Отображение результата:
-  - [ ] Топ-5 ключевых событий
-  - [ ] Основные тренды
-  - [ ] Рекомендации
-- [ ] Кнопка скачать как текст
-
-#### AI Summarize Edge Function
-- [ ] Создать `supabase/functions/ai-summarize/index.ts`
-- [ ] Загрузка событий за период
-- [ ] Формирование контекста для Claude
-- [ ] Вызов Claude с инструкцией суммаризировать
-- [ ] Парсинг результата
-- [ ] Возврат в Frontend
+### 🟢 LOW (Next 2-4 weeks)
+- GitHub Actions automation
+- Monitoring & logging
+- Performance optimization
+- Testing & polish
 
 ---
 
-## ⚪ НИЗКИЙ ПРИОРИТЕТ (Неделя 4)
+## 📊 STATS
 
-### Automation & CI/CD
+### Phase 3 Completion
+- ✅ 100% Admin UI complete
+- ✅ 9 Edge Functions deployed
+- ✅ 4 Admin Modules
+- ✅ 5000+ lines of code
+- ✅ 17 total commits
 
-#### GitHub Actions Workflow
-- [ ] Создать `.github/workflows/scheduled-search.yml`
-- [ ] Триггер: schedule (ежедневно в 08:55 UTC)
-- [ ] Загрузка всех активных job_schedules
-- [ ] Для каждого джоба:
-  - [ ] Проверка времени запуска
-  - [ ] Вызов Edge Function
-  - [ ] Обновление next_run_at
-  - [ ] Логирование результата
-
-- [ ] Отправка email-отчета (опционально)
-
-### Email Notifications
-
-#### Email Configuration
-- [ ] Выбрать email сервис (SendGrid, Resend, Mailgun)
-- [ ] Получить API ключ
-- [ ] Настроить Edge Function
-
-#### Email Templates
-- [ ] Шаблон: Ошибка при поиске
-- [ ] Шаблон: Успешный поиск (новые события)
-- [ ] Шаблон: Приглашение пользователя
-
-#### Send Email Edge Function
-- [ ] Создать `supabase/functions/send-email/index.ts`
-- [ ] Инициализация email сервиса
-- [ ] Отправка при ошибке поиска
-- [ ] Отправка при успешном поиске
-
-### Error Handling & Logging
-
-#### Error Boundary
-- [ ] Создать `frontend/src/components/ErrorBoundary.tsx`
-- [ ] Обертка для всего приложения
-- [ ] Fallback UI при ошибке
-- [ ] Логирование в консоль
-
-#### Toast Notifications
-- [ ] Использовать Ant Design message/notification
-- [ ] Success message при сохранении
-- [ ] Error message при ошибке
-- [ ] Info message для action confirmations
-
-#### Backend Logging
-- [ ] Логирование в Edge Functions
-- [ ] Сохранение логов в таблицу audit_log
-- [ ] Доступ к логам для админов (опционально)
-
-### Polish & Testing
-
-#### Form Validation
-- [ ] Email валидация (всех форм)
-- [ ] Required fields проверка
-- [ ] Password strength (для регистрации)
-- [ ] Дата валидация
-- [ ] Числовые поля
-
-#### Loading States
-- [ ] Loading индикатор при загрузке данных
-- [ ] Disabled кнопки во время загрузки
-- [ ] Skeleton screens (опционально)
-- [ ] Spinner для длительных операций
-
-#### Empty States
-- [ ] "Нет пользователей" - если список пуст
-- [ ] "Нет промптов" - если список пуст
-- [ ] "Нет событий" - если список пуст
-- [ ] Ссылки на создание новых объектов
-
-#### Responsive Design
-- [ ] Мобильная версия (mobile-first)
-- [ ] Таблицы на мобильных (accordion или горизонтальный скролл)
-- [ ] Меню на мобильных (бургер меню)
-- [ ] Тестирование на разных размерах экрана
-
-#### User Testing
-- [ ] Тест входа (admin и user)
-- [ ] Тест создания пользователя (admin)
-- [ ] Тест создания промпта (admin)
-- [ ] Тест создания расписания (admin)
-- [ ] Тест запуска поиска (admin)
-- [ ] Тест просмотра событий (user)
-- [ ] Тест экспорта отчета (user)
-- [ ] Тест всех фильтров
-
-### Documentation
-
-#### User Guide
-- [ ] Создать `docs/user-guide.md`
-- [ ] Раздел: Как войти в систему
-- [ ] Раздел: Как просматривать события
-- [ ] Раздел: Как скачивать отчеты
-- [ ] Раздел: Как получить AI анализ
-- [ ] Раздел: Контакты поддержки
-
-#### Admin Guide
-- [ ] Создать `docs/admin-guide.md`
-- [ ] Раздел: Управление пользователями
-- [ ] Раздел: Создание промптов
-- [ ] Раздел: Настройка расписания
-- [ ] Раздел: Интерпретация результатов
-
-#### API Documentation
-- [ ] Документировать Edge Functions
-- [ ] Параметры и ответы
-- [ ] Примеры вызовов
-- [ ] Обработка ошибок
-
-#### Code Comments
-- [ ] Комментарии в сложных частях
-- [ ] JSDoc комментарии для функций
-- [ ] Inline комментарии для логики
+### Phase 4 Progress
+- 🚀 0% (Starting)
+- [ ] 5 core agents to implement
+- [ ] 4 supporting agents to implement
+- [ ] Full pipeline integration
 
 ---
 
-## 💡 БУДУЩИЕ УЛУЧШЕНИЯ (После MVP)
+## 🔄 AUTO-UPDATE PROTOCOL
 
-### Функциональность
-- [ ] Скрейпинг конкретных веб-сайтов
-- [ ] ML для прогнозирования трендов
-- [ ] Telegram бот интеграция
-- [ ] Slack интеграция
-- [ ] Мобильное приложение (React Native)
-- [ ] Экспорт в PowerPoint
-- [ ] Комментарии к событиям
-- [ ] Избранные события (bookmarks)
-- [ ] Персональные дашборды
-
-### Аналитика
-- [ ] Sentiment analysis новостей
-- [ ] Сравнение с прошлыми периодами
-- [ ] Прогнозирование активности
-- [ ] Конкурентный анализ
-
-### Безопасность
-- [ ] Двухфакторная аутентификация (2FA)
-- [ ] SSO для компаний
-- [ ] Детальный audit log
-- [ ] Резервное копирование
-
-### UX
-- [ ] Темная тема
-- [ ] Язык и часовой пояс
-- [ ] Персализация дашборда
-- [ ] Горячие клавиши
-- [ ] Dark mode
+**After each `git push`:**
+1. Update CLAUDE.md (version + status)
+2. Update DEVELOPMENT_STATUS.md (progress %)
+3. Update PROGRESS.md (session notes)
+4. Update TODO.md (this file - completed tasks)
+5. Update ROADMAP.md (timeline if needed)
 
 ---
 
-**Версия:** 0.1.0
-**Обновлено:** 2024-12-03
-**Автор:** Claude Code
+**Version:** 0.6.0
+**Last Updated:** 2025-12-13
+**Status:** Phase 4 Starting 🚀
+**Next Update:** After next `git push`

@@ -31,6 +31,7 @@ import {
   FilePptOutlined,
   GlobalOutlined,
   ThunderboltOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -59,6 +60,24 @@ const documentTypeLabels: Record<DocumentType, string> = {
   pptx: 'PowerPoint',
   html: 'HTML',
   webpage: 'Веб-страница',
+};
+
+/**
+ * Форматирует размер файла из байтов в человеческий формат
+ */
+const formatFileSize = (bytes: number | null | undefined): string => {
+  if (!bytes || bytes === 0) return '—';
+
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+
+  return `${size.toFixed(1)} ${units[unitIndex]}`;
 };
 
 export const DocumentsLibrary: React.FC = () => {
@@ -225,18 +244,33 @@ export const DocumentsLibrary: React.FC = () => {
         ),
     },
     {
+      title: 'Размер',
+      dataIndex: 'file_size',
+      key: 'file_size',
+      width: 100,
+      align: 'center',
+      render: (size: number | null | undefined) => formatFileSize(size),
+    },
+    {
       title: 'Файл',
       dataIndex: 'file_url',
       key: 'file_url',
-      width: 80,
+      width: 100,
       align: 'center',
       render: (url: string | null, record) =>
         url ? (
-          <Tooltip title="Открыть файл">
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              {documentTypeIcons[record.document_type]}
-            </a>
-          </Tooltip>
+          <Space size="small">
+            <Tooltip title="Открыть файл">
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                {documentTypeIcons[record.document_type]}
+              </a>
+            </Tooltip>
+            <Tooltip title="Скачать файл">
+              <a href={url} download>
+                <DownloadOutlined />
+              </a>
+            </Tooltip>
+          </Space>
         ) : (
           '—'
         ),

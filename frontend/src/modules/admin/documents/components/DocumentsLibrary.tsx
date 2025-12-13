@@ -35,7 +35,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useDocuments, useDeleteDocument, useSemanticSearch, type DocumentFilters } from '../hooks/useDocuments';
+import { useDocuments, useDeleteDocument, useSemanticSearch, useGenerateDownloadUrl, type DocumentFilters } from '../hooks/useDocuments';
 import type { Document, DocumentType, SemanticSearchResult } from '@/shared/types';
 import { DocumentUploadModal } from './DocumentUploadModal';
 
@@ -96,6 +96,7 @@ export const DocumentsLibrary: React.FC = () => {
   const { data, isLoading, refetch } = useDocuments(filters);
   const deleteDocumentMutation = useDeleteDocument();
   const semanticSearchMutation = useSemanticSearch();
+  const generateDownloadUrlMutation = useGenerateDownloadUrl();
 
   // ============================================================================
   // Handlers
@@ -182,6 +183,37 @@ export const DocumentsLibrary: React.FC = () => {
     }
   };
 
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      // Генерируем signed URL
+      const signedUrl = await generateDownloadUrlMutation.mutateAsync(url);
+
+      // Создаем временный элемент для скачивания
+      const link = document.createElement('a');
+      link.href = signedUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      message.success('Файл скачивается');
+    } catch (error) {
+      message.error(`Ошибка скачивания: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleOpenFile = async (url: string) => {
+    try {
+      // Генерируем signed URL
+      const signedUrl = await generateDownloadUrlMutation.mutateAsync(url);
+
+      // Открываем в новой вкладке
+      window.open(signedUrl, '_blank');
+    } catch (error) {
+      message.error(`Ошибка открытия файла: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   // ============================================================================
   // Table Columns
   // ============================================================================
@@ -261,14 +293,22 @@ export const DocumentsLibrary: React.FC = () => {
         url ? (
           <Space size="small">
             <Tooltip title="Открыть файл">
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                {documentTypeIcons[record.document_type]}
-              </a>
+              <Button
+                type="text"
+                size="small"
+                icon={documentTypeIcons[record.document_type]}
+                onClick={() => handleOpenFile(url)}
+                loading={generateDownloadUrlMutation.isPending}
+              />
             </Tooltip>
             <Tooltip title="Скачать файл">
-              <a href={url} download>
-                <DownloadOutlined />
-              </a>
+              <Button
+                type="text"
+                size="small"
+                icon={<DownloadOutlined />}
+                onClick={() => handleDownload(url, record.title)}
+                loading={generateDownloadUrlMutation.isPending}
+              />
             </Tooltip>
           </Space>
         ) : (

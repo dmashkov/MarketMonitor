@@ -239,6 +239,41 @@ async function deleteDocument(id: string): Promise<DocumentDeleteResponse> {
   return response.json();
 }
 
+/**
+ * Генерировать signed URL для скачивания документа
+ */
+async function generateDownloadUrl(filePath: string): Promise<string> {
+  try {
+    // filePath может быть:
+    // 1. Просто path: "user-uploads/uuid/filename.pdf"
+    // 2. Полный URL (для старых документов): "https://aggiamgeplckdrnbqmob.supabase.co/storage/v1/object/public/market-documents/..."
+
+    let actualPath = filePath;
+
+    // Если это полный URL, извлекаем path
+    if (filePath.includes('/object/public/')) {
+      const parts = filePath.split('/object/public/');
+      const pathWithBucket = parts[1];
+      const pathParts = pathWithBucket.split('/');
+      pathParts.shift(); // Удаляем bucket name
+      actualPath = pathParts.join('/');
+    }
+
+    // Генерируем signed URL на 1 час
+    const { data, error } = await supabase.storage
+      .from('market-documents')
+      .createSignedUrl(actualPath, 3600); // 1 час
+
+    if (error) {
+      throw error;
+    }
+
+    return data.signedUrl;
+  } catch (error) {
+    throw new Error(`Failed to generate download URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
 // ============================================================================
 // React Query Hooks
 // ============================================================================
@@ -301,5 +336,14 @@ export function useDeleteDocument() {
       // Инвалидируем кэш списка документов
       queryClient.invalidateQueries({ queryKey: documentsKeys.lists() });
     },
+  });
+}
+
+/**
+ * Hook: Генерировать signed URL для скачивания
+ */
+export function useGenerateDownloadUrl() {
+  return useMutation({
+    mutationFn: generateDownloadUrl,
   });
 }

@@ -83,10 +83,12 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
 
     try {
       let fileUrl: string | undefined = undefined;
+      let fileSize: number | undefined = undefined;
 
       // Если есть файл, загружаем в Supabase Storage
       if (fileList.length > 0 && fileList[0].originFileObj) {
         const file = fileList[0].originFileObj;
+        fileSize = file.size;
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -107,15 +109,12 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
           throw new Error(`Ошибка загрузки файла: ${uploadError.message}`);
         }
 
-        // Получаем публичный URL (для приватных buckets используем getPublicUrl, но файл доступен только authenticated users)
-        const { data: { publicUrl } } = supabase.storage
-          .from('market-documents')
-          .getPublicUrl(uploadData.path);
-
-        fileUrl = publicUrl;
+        // Сохраняем только path (без publicUrl, т.к. bucket private)
+        // Signed URL будет генерироваться при скачивании
+        fileUrl = uploadData.path;
       }
 
-      // Создаем документ с URL файла
+      // Создаем документ с URL файла и размером
       const documentData: CreateDocumentFormData = {
         title: values.title,
         description: values.description,
@@ -123,6 +122,7 @@ export const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
         source_url: values.source_url,
         content_text: values.content_text,
         file_url: fileUrl,
+        file_size: fileSize,
       };
 
       await createMutation.mutateAsync(documentData);

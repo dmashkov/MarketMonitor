@@ -41,6 +41,7 @@ CREATE INDEX idx_brands_category ON brands(category);
 CREATE INDEX idx_brands_is_active ON brands(is_active);
 
 -- Триггер для обновления updated_at
+DROP TRIGGER IF EXISTS update_brands_updated_at ON brands;
 CREATE TRIGGER update_brands_updated_at
   BEFORE UPDATE ON brands
   FOR EACH ROW

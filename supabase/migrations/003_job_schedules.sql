@@ -40,6 +40,8 @@ CREATE INDEX IF NOT EXISTS idx_job_schedules_created_at ON job_schedules(created
 -- TRIGGER: Update updated_at on job_schedules
 -- ============================================================================
 
+DROP TRIGGER IF EXISTS trigger_job_schedules_updated_at ON job_schedules;
+
 CREATE TRIGGER trigger_job_schedules_updated_at
   BEFORE UPDATE ON job_schedules
   FOR EACH ROW

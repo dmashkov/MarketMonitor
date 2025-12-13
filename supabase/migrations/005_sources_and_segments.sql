@@ -172,6 +172,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_segments_updated_at ON public.segments;
 CREATE TRIGGER trigger_segments_updated_at
   BEFORE UPDATE ON public.segments
   FOR EACH ROW
@@ -186,6 +187,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_geographies_updated_at ON public.geographies;
 CREATE TRIGGER trigger_geographies_updated_at
   BEFORE UPDATE ON public.geographies
   FOR EACH ROW
@@ -200,6 +202,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_sources_updated_at ON public.sources;
 CREATE TRIGGER trigger_sources_updated_at
   BEFORE UPDATE ON public.sources
   FOR EACH ROW
@@ -214,6 +217,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_source_urls_updated_at ON public.source_urls;
 CREATE TRIGGER trigger_source_urls_updated_at
   BEFORE UPDATE ON public.source_urls
   FOR EACH ROW
@@ -232,9 +236,11 @@ ALTER TABLE public.source_urls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prompt_segments ENABLE ROW LEVEL SECURITY;
 
 -- Segments: все могут читать, админы могут редактировать
+DROP POLICY IF EXISTS "Segments viewable by authenticated users" ON public.segments;
 CREATE POLICY "Segments viewable by authenticated users" ON public.segments
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Segments manageable by admins" ON public.segments;
 CREATE POLICY "Segments manageable by admins" ON public.segments
   FOR ALL USING (
     EXISTS (
@@ -244,9 +250,11 @@ CREATE POLICY "Segments manageable by admins" ON public.segments
   );
 
 -- Geographies: все могут читать, админы могут редактировать
+DROP POLICY IF EXISTS "Geographies viewable by authenticated users" ON public.geographies;
 CREATE POLICY "Geographies viewable by authenticated users" ON public.geographies
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Geographies manageable by admins" ON public.geographies;
 CREATE POLICY "Geographies manageable by admins" ON public.geographies
   FOR ALL USING (
     EXISTS (
@@ -256,13 +264,16 @@ CREATE POLICY "Geographies manageable by admins" ON public.geographies
   );
 
 -- Source Types: все могут читать
+DROP POLICY IF EXISTS "Source types viewable by all" ON public.source_types;
 CREATE POLICY "Source types viewable by all" ON public.source_types
   FOR SELECT USING (true);
 
 -- Sources: все могут читать активные, админы могут редактировать
+DROP POLICY IF EXISTS "Sources viewable by authenticated users" ON public.sources;
 CREATE POLICY "Sources viewable by authenticated users" ON public.sources
   FOR SELECT USING (auth.role() = 'authenticated' AND is_active = true);
 
+DROP POLICY IF EXISTS "Sources manageable by admins" ON public.sources;
 CREATE POLICY "Sources manageable by admins" ON public.sources
   FOR ALL USING (
     EXISTS (
@@ -272,9 +283,11 @@ CREATE POLICY "Sources manageable by admins" ON public.sources
   );
 
 -- Source URLs: все могут читать активные, админы могут редактировать
+DROP POLICY IF EXISTS "Source URLs viewable by authenticated users" ON public.source_urls;
 CREATE POLICY "Source URLs viewable by authenticated users" ON public.source_urls
   FOR SELECT USING (auth.role() = 'authenticated' AND is_active = true);
 
+DROP POLICY IF EXISTS "Source URLs manageable by admins" ON public.source_urls;
 CREATE POLICY "Source URLs manageable by admins" ON public.source_urls
   FOR ALL USING (
     EXISTS (
@@ -284,9 +297,11 @@ CREATE POLICY "Source URLs manageable by admins" ON public.source_urls
   );
 
 -- Prompt Segments: все могут читать, админы могут редактировать
+DROP POLICY IF EXISTS "Prompt segments viewable by authenticated users" ON public.prompt_segments;
 CREATE POLICY "Prompt segments viewable by authenticated users" ON public.prompt_segments
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Prompt segments manageable by admins" ON public.prompt_segments;
 CREATE POLICY "Prompt segments manageable by admins" ON public.prompt_segments
   FOR ALL USING (
     EXISTS (

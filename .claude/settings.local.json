@@ -1,5 +1,4 @@
 {
-  "model": "haiku",
   "permissions": {
     "allow": [
       "Bash(git add:*)",
@@ -20,9 +19,14 @@
       "WebSearch",
       "WebFetch(domain:supabase.com)",
       "Bash(grep:*)",
-      "Bash(export SUPABASE_ACCESS_TOKEN='sbp_91472dbd3dff46fb192dfeca8e2c2712a3b4421d')"
+      "Bash(export SUPABASE_ACCESS_TOKEN='sbp_91472dbd3dff46fb192dfeca8e2c2712a3b4421d')",
+      "Bash(while read f)",
+      "Bash(do grep -q \"DROP TRIGGER IF EXISTS\" \"$f\")",
+      "Bash(echo:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "model": "haiku"
 }

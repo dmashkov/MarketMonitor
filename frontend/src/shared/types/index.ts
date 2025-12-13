@@ -256,6 +256,7 @@ export interface Document {
   content_text: string | null;
   content_html: string | null;
   file_url: string | null;
+  file_size: number | null;
   source_url: string | null;
 
   // Метаданные

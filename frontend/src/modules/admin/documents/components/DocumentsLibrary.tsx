@@ -542,14 +542,20 @@ export const DocumentsLibrary: React.FC = () => {
             Запрос: <Text strong>"{semanticSearchQuery}"</Text>
           </Text>
         </div>
-        <Table<SemanticSearchResult>
-          columns={searchResultColumns}
-          dataSource={semanticSearchResults || []}
-          rowKey="id"
-          pagination={false}
-          size="small"
-          scroll={{ x: 900 }}
-        />
+        {semanticSearchResults && semanticSearchResults.length > 0 ? (
+          <Table<SemanticSearchResult>
+            columns={searchResultColumns}
+            dataSource={semanticSearchResults}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            scroll={{ x: 900 }}
+          />
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <Text type="secondary">По вашему запросу ничего не найдено. Попробуйте другой запрос.</Text>
+          </div>
+        )}
       </Modal>
     </Card>
   );

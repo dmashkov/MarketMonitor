@@ -298,6 +298,7 @@ export interface CreateDocumentFormData {
   content_text?: string;
   content_html?: string;
   file_url?: string;
+  file_size?: number;
   source_url?: string;
   source_id?: string;
   published_date?: string;

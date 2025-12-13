@@ -34,6 +34,7 @@ interface Document {
   content_text: string | null;
   content_html: string | null;
   file_url: string | null;
+  file_size: number | null;
   source_url: string | null;
 
   // Метаданные
@@ -81,6 +82,7 @@ interface CreateDocumentRequest {
   content_text?: string;
   content_html?: string;
   file_url?: string;
+  file_size?: number;
   source_url?: string;
   source_id?: string;
   published_date?: string;
@@ -381,6 +383,7 @@ serve(async (req) => {
           content_text: body.content_text || null,
           content_html: body.content_html || null,
           file_url: body.file_url || null,
+          file_size: body.file_size || null,
           source_url: body.source_url || null,
           source_id: body.source_id || null,
           published_date: publishedDate,

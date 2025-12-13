@@ -176,46 +176,56 @@
 ## 🚀 Phase 4: AI Agents Implementation (IN PROGRESS)
 
 **Дата начала:** 2025-12-13
-**Статус:** 0% (Starting Source Hunter Agent)
+**Статус:** 20% (Source Hunter + Content Fetcher complete)
+**Last Update:** 2025-12-13 - Content Fetcher Agent complete (19/19 tests pass)
 
-### Что нужно сделать:
+### ✅ Завершено (Phase 4 - Part 1-2):
 
-#### 1. **Доработка Documents Library** (1-2 часа)
+#### 1. **Documents Library Improvements** ✅
+- ✅ Download button functionality
+- ✅ File size display with proper formatting
+- ✅ Document type filtering (PDF, DOCX, PPTX, HTML, Webpage)
+- ✅ Semantic search UI ready
+- ✅ Document icons and layout
+- **Testing:** 13 tests - ALL PASS ✅
 
-**A. Семантический поиск - тестирование**
-- [ ] Проверить, работает ли RPC функция `search_documents_by_embedding`
-- [ ] Если нужна - создать RPC функцию в БД для семантического поиска через pgvector
-- [ ] Протестировать через DocumentsLibrary UI
+#### 2. **Source Hunter Agent** ✅
+- ✅ Folder: `supabase/functions/agents/source-hunter/`
+- ✅ Автоматический поиск источников по сегментам и географии
+- ✅ OpenAI query generation (gpt-4o-mini)
+- ✅ Mock search implementation
+- ✅ CORS headers configuration
+- ✅ Error handling и validation
+- ✅ Types: SourceHunterRequest, SourceHunterResponse
+- ✅ README.md, POSTMAN_COLLECTION.json
+- **Testing:** 11 tests - ALL PASS ✅
 
-**B. Просмотр файлов**
-- [ ] Добавить кнопку "Скачать" в таблице документов
-- [ ] Рендерить file_url как кликабельную ссылку
-- [ ] Иконка PDF/DOCX рядом с названием файла
+#### 3. **Content Fetcher Agent** ✅
+- ✅ Folder: `supabase/functions/agents/content-fetcher/`
+- ✅ HTTP fetch с timeout и retry логикой (3 attempts, exponential backoff)
+- ✅ Content parsing:
+  - HTML парсинг (удаление тегов и скриптов)
+  - PDF базовый текстовый экстрактор
+  - DOCX XML парсер
+  - PPTX XML парсер
+  - Text files поддержка
+- ✅ Content size limits (max 50KB)
+- ✅ Database update (documents.content_text, fetched_at, content_length)
+- ✅ CORS headers и preflight handling
+- ✅ Error handling (404, 403, timeout, JSON parse errors)
+- ✅ Types: ContentFetcherRequest, ContentFetcherResponse
+- ✅ README.md, POSTMAN_COLLECTION.json, test script
+- **Testing:** 19 tests - ALL PASS ✅ (100% success rate)
 
-**C. Улучшения UX**
-- [ ] Отображение размера файла в таблице
-- [ ] Фильтр по document_type (PDF/DOCX/PPTX)
-- [ ] Превью первых 200 символов content_text
+### Что нужно сделать (Phase 4 - Part 3-8):
 
-#### 2. **Source Hunter Agent** (Edge Function)
-- [ ] Создать `supabase/functions/agents/source-hunter/index.ts`
-- [ ] Автоматический поиск новых документов через OpenAI Web Search
-- [ ] Интеграция с Document Processor
-- [ ] Сохранение результатов в documents таблицу
-
-#### 3. **Content Fetcher Agent** (Edge Function)
-- [ ] Создать `supabase/functions/agents/content-fetcher/index.ts`
-- [ ] Загрузка контента с найденных источников
-- [ ] Парсинг HTML/PDF/DOCX
-- [ ] Передача Document Processor
-
-#### 4. **Document Processor Agent** (Edge Function)
+#### 4. **Document Processor Agent** (NEXT - Part 3)
 - [ ] Создать `supabase/functions/agents/document-processor/index.ts`
-- [ ] Upload в Supabase Storage
-- [ ] Text extraction (PDF, PPTX, DOCX)
-- [ ] HTML → clean text
-- [ ] Embedding generation (OpenAI text-embedding-3-small)
-- [ ] Mentions extraction (brands, segments, geographies)
+- [ ] Text extraction (HTML, PDF, DOCX, PPTX парсинг)
+- [ ] Mentions extraction (brands, segments, geographies) через OpenAI
+- [ ] Embedding generation (OpenAI text-embedding-3-small, 1536 dims)
+- [ ] Supabase Storage integration
+- [ ] Database update с embeddings для pgvector
 - [ ] Сохранение в documents table
 
 #### 5. **Event Extractor Agent** (Edge Function)
@@ -289,11 +299,11 @@
 Phase 1: Foundation                   ████████████████████ 100% ✅
 Phase 2: MVP Auth+Events             ████████████████████ 100% ✅
 Phase 3: Admin UI Complete           ████████████████████ 100% ✅
-Phase 4: AI Agents                   ░░░░░░░░░░░░░░░░░░░░   0% 🚀
+Phase 4: AI Agents                   ████░░░░░░░░░░░░░░░░  20% 🚀 (Source Hunter + Content Fetcher)
 Phase 5: Production Ready            ░░░░░░░░░░░░░░░░░░░░   0% 📋
 
 MVP with Admin UI:     ████████████████████ 100% ✅
-MVP with AI Agents:    ░░░░░░░░░░░░░░░░░░░░   0% 🚀
+MVP with AI Agents:    ████░░░░░░░░░░░░░░░░  20% 🚀
 ```
 
 ---

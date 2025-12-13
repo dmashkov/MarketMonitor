@@ -2,11 +2,11 @@
 
 **Дата:** 2025-12-13
 **Версия:** 0.6.0
-**Статус:** ✅ Phase 3 Complete (Admin UI 100%) + 🚀 Phase 4 Starting (AI Agents Implementation)
+**Статус:** ✅ Phase 3 Complete (Admin UI 100%) + 🚀 Phase 4 Part 3 (Prompts Management Complete!)
 **AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini + text-embedding-3-small)
 **Deploy:** Netlify (Frontend)
-**Architecture:** Multi-Agent System (8 specialized agents) + Document Storage + Admin UI
-**Last Major Update:** Phase 3 Complete! All Admin modules (Brands, Sources, Documents, Users) fully functional (2025-12-13)
+**Architecture:** Multi-Agent System (8 specialized agents) + Document Storage + Admin UI + Prompts Management
+**Last Major Update:** Phase 4 Part 3 Complete! Prompts Management UI fully functional (2025-12-13)
 
 ---
 
@@ -176,17 +176,18 @@
 ## 🚀 Phase 4: AI Agents Implementation (IN PROGRESS)
 
 **Дата начала:** 2025-12-13
-**Статус:** 20% (Source Hunter + Content Fetcher complete)
-**Last Update:** 2025-12-13 - Content Fetcher Agent complete (19/19 tests pass)
+**Статус:** 25% (Source Hunter + Content Fetcher + Prompts Management complete)
+**Last Update:** 2025-12-13 - Prompts Management UI complete with 5 default prompts seeded
 
-### ✅ Завершено (Phase 4 - Part 1-2):
+### ✅ Завершено (Phase 4 - Part 1-3):
 
 #### 1. **Documents Library Improvements** ✅
-- ✅ Download button functionality
+- ✅ Download button functionality (signed URLs for private bucket)
 - ✅ File size display with proper formatting
 - ✅ Document type filtering (PDF, DOCX, PPTX, HTML, Webpage)
-- ✅ Semantic search UI ready
+- ✅ Semantic search UI with pgvector integration
 - ✅ Document icons and layout
+- ✅ Content preview tooltips (first 200 chars)
 - **Testing:** 13 tests - ALL PASS ✅
 
 #### 2. **Source Hunter Agent** ✅
@@ -203,23 +204,38 @@
 #### 3. **Content Fetcher Agent** ✅
 - ✅ Folder: `supabase/functions/agents/content-fetcher/`
 - ✅ HTTP fetch с timeout и retry логикой (3 attempts, exponential backoff)
-- ✅ Content parsing:
-  - HTML парсинг (удаление тегов и скриптов)
-  - PDF базовый текстовый экстрактор
-  - DOCX XML парсер
-  - PPTX XML парсер
-  - Text files поддержка
+- ✅ Content parsing (HTML, PDF, DOCX, PPTX, Text)
 - ✅ Content size limits (max 50KB)
-- ✅ Database update (documents.content_text, fetched_at, content_length)
+- ✅ Database update (documents.content_text, fetched_at, file_size)
 - ✅ CORS headers и preflight handling
 - ✅ Error handling (404, 403, timeout, JSON parse errors)
 - ✅ Types: ContentFetcherRequest, ContentFetcherResponse
 - ✅ README.md, POSTMAN_COLLECTION.json, test script
 - **Testing:** 19 tests - ALL PASS ✅ (100% success rate)
 
-### Что нужно сделать (Phase 4 - Part 3-8):
+#### 4. **Prompts Management UI** ✅ (NEW!)
+- ✅ Folder: `frontend/src/modules/admin/prompts/`
+- ✅ PromptsManager - CRUD таблица с фильтрами
+- ✅ PromptFormModal - форма создания/редактирования промптов
+- ✅ usePrompts - React Query hooks (GET list, GET single, POST, PATCH, DELETE)
+- ✅ prompts-api Edge Function (GET, POST, PATCH, DELETE с RLS)
+- ✅ Integration into AdminPanel (новая вкладка "📝 Промпты")
+- ✅ Filter by: search text, search type, active status
+- ✅ Segment и geography specialization support
+- ✅ TypeScript strict mode, full type safety
+- ✅ Seeded 5 default AI prompts:
+  - Daily Market Actions (all segments)
+  - Daily Price Changes (RAC segment)
+  - Weekly Industry Partnerships
+  - Weekly Regulatory Updates
+  - Monthly Market Trends Analysis
+  - Monthly Competitive Intelligence
+- ✅ Migration 016 with proper RLS policies
+- **Status:** ✅ Ready for testing + ready for agents to consume
 
-#### 4. **Document Processor Agent** (NEXT - Part 3)
+### Что нужно сделать (Phase 4 - Part 4-8):
+
+#### 5. **Document Processor Agent** (NEXT - Part 4)
 - [ ] Создать `supabase/functions/agents/document-processor/index.ts`
 - [ ] Text extraction (HTML, PDF, DOCX, PPTX парсинг)
 - [ ] Mentions extraction (brands, segments, geographies) через OpenAI
@@ -228,45 +244,45 @@
 - [ ] Database update с embeddings для pgvector
 - [ ] Сохранение в documents table
 
-#### 5. **Event Extractor Agent** (Edge Function)
+#### 6. **Event Extractor Agent** (Edge Function)
 - [ ] Создать `supabase/functions/agents/event-extractor/index.ts`
 - [ ] Извлечение событий из текста через OpenAI
 - [ ] Chunking для длинных документов
 - [ ] Парсинг JSON ответов
 - [ ] Сохранение в events таблицу
 
-#### 6. **Criticality Scorer Agent** (Edge Function)
+#### 7. **Criticality Scorer Agent** (Edge Function)
 - [ ] Создать `supabase/functions/agents/criticality-scorer/index.ts`
 - [ ] Batch processing (10 событий)
 - [ ] Скоринг по шкале 1-5
 - [ ] Reasoning + factors
 - [ ] Обновление events таблицы
 
-#### 7. **Duplicate Detector Agent** (Edge Function)
+#### 8. **Duplicate Detector Agent** (Edge Function)
 - [ ] Создать `supabase/functions/agents/duplicate-detector/index.ts`
 - [ ] Cosine similarity через embeddings
 - [ ] Merge logic
 - [ ] Threshold: similarity > 0.85
 
-#### 8. **Alert Manager Agent** (Edge Function)
+#### 9. **Alert Manager Agent** (Edge Function)
 - [ ] Создать `supabase/functions/agents/alert-manager/index.ts`
 - [ ] Telegram bot setup
 - [ ] Email notifications
 - [ ] In-app alerts
 
-#### 9. **Orchestrator** (Edge Function)
+#### 10. **Orchestrator** (Edge Function)
 - [ ] Создать `supabase/functions/agents/orchestrator/index.ts`
 - [ ] Запуск полного pipeline
 - [ ] Интеграция с search_runs
 - [ ] Error handling и retry logic
 
-#### 10. **Report Generator** (Edge Function)
+#### 11. **Report Generator** (Edge Function)
 - [ ] Создать `supabase/functions/agents/report-generator/index.ts`
 - [ ] Daily/Weekly/Monthly reports
 - [ ] Export в PDF/DOCX
 - [ ] Сохранение в reports таблицу
 
-#### 11. **Custom Prompt Runner** (Edge Function)
+#### 12. **Custom Prompt Runner** (Edge Function)
 - [ ] Создать `supabase/functions/agents/custom-prompt-runner/index.ts`
 - [ ] Запуск кастомных промптов
 - [ ] Определение: новый поиск или использование БД
@@ -299,11 +315,11 @@
 Phase 1: Foundation                   ████████████████████ 100% ✅
 Phase 2: MVP Auth+Events             ████████████████████ 100% ✅
 Phase 3: Admin UI Complete           ████████████████████ 100% ✅
-Phase 4: AI Agents                   ████░░░░░░░░░░░░░░░░  20% 🚀 (Source Hunter + Content Fetcher)
+Phase 4: AI Agents                   █████░░░░░░░░░░░░░░░  25% 🚀 (Source Hunter + Content Fetcher + Prompts Mgmt)
 Phase 5: Production Ready            ░░░░░░░░░░░░░░░░░░░░   0% 📋
 
 MVP with Admin UI:     ████████████████████ 100% ✅
-MVP with AI Agents:    ████░░░░░░░░░░░░░░░░  20% 🚀
+MVP with AI Agents:    █████░░░░░░░░░░░░░░░  25% 🚀
 ```
 
 ---

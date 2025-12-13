@@ -11,7 +11,8 @@
  * All endpoints require authentication and admin role (except GET list)
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 // ============================================================================
 // TYPES
@@ -52,13 +53,20 @@ interface ApiResponse<T> {
 }
 
 // ============================================================================
+// ENVIRONMENT
+// ============================================================================
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+// ============================================================================
 // CORS Headers
 // ============================================================================
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 // ============================================================================
@@ -66,16 +74,13 @@ const corsHeaders = {
 // ============================================================================
 
 function jsonResponse<T>(data: T, status: number = 200): Response {
-  const response = new Response(JSON.stringify(data), {
+  return new Response(JSON.stringify(data), {
     status,
     headers: {
+      ...corsHeaders,
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': corsHeaders['Access-Control-Allow-Origin'],
-      'Access-Control-Allow-Methods': corsHeaders['Access-Control-Allow-Methods'],
-      'Access-Control-Allow-Headers': corsHeaders['Access-Control-Allow-Headers'],
     },
   });
-  return response;
 }
 
 function errorResponse(message: string, status: number = 400): Response {
@@ -337,16 +342,12 @@ async function handleDelete(
 // Main Handler
 // ============================================================================
 
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': corsHeaders['Access-Control-Allow-Origin'],
-        'Access-Control-Allow-Methods': corsHeaders['Access-Control-Allow-Methods'],
-        'Access-Control-Allow-Headers': corsHeaders['Access-Control-Allow-Headers'],
-      },
+    return new Response('ok', {
+      status: 200,
+      headers: corsHeaders,
     });
   }
 
@@ -354,29 +355,30 @@ Deno.serve(async (req: Request) => {
     const url = new URL(req.url);
     const method = req.method;
 
-    // Initialize Supabase client
-    const authHeader = req.headers.get('Authorization');
-    const token = authHeader?.replace('Bearer ', '');
-
-    if (!token) {
-      return errorResponse('Missing authorization token', 401);
+    // Get authorization header
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return errorResponse('Missing authorization header', 401);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') || '',
-      Deno.env.get('SUPABASE_ANON_KEY') || '',
-      {
-        global: { headers: { Authorization: `Bearer ${token}` } },
-      },
-    );
+    // Extract JWT token
+    const jwt = authHeader.replace('Bearer ', '');
 
-    // Verify user is authenticated
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData.user) {
+    // Initialize Supabase client with SERVICE_ROLE_KEY to bypass RLS
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    // Verify user - pass JWT explicitly
+    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
+    if (authError || !user) {
       return errorResponse('Unauthorized', 401);
     }
 
-    const userId = authData.user.id;
+    const userId = user.id;
 
     // Route requests
     if (method === 'GET') {

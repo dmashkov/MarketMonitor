@@ -169,7 +169,7 @@ export const DocumentsLibrary: React.FC = () => {
       const result = await semanticSearchMutation.mutateAsync({
         query: semanticSearchQuery,
         limit: 10,
-        threshold: 0.7,
+        threshold: 0.5,
       });
 
       setSemanticSearchResults(result.data);

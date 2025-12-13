@@ -390,7 +390,7 @@ serve(async (req) => {
           brand_ids: body.brand_ids || null,
           segment_ids: body.segment_ids || null,
           geography_ids: body.geography_ids || null,
-          embedding: embedding ? `[${embedding.join(',')}]` : null,
+          embedding: embedding || null,
           created_by: user.id,
         })
         .select()
@@ -426,7 +426,7 @@ serve(async (req) => {
       }
 
       const limit = body.limit || 10;
-      const threshold = body.threshold || 0.7;
+      const threshold = body.threshold || 0.5;
 
       // Генерируем embedding для query
       let queryEmbedding: number[];
@@ -466,7 +466,6 @@ serve(async (req) => {
       }
 
       // Поиск через cosine similarity
-      // SQL: SELECT *, 1 - (embedding <=> $embedding) as similarity
       const { data: results, error: searchError } = await supabaseClient
         .rpc('search_documents_by_embedding', {
           query_embedding: queryEmbedding,

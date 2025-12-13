@@ -50,7 +50,7 @@ RETURNS TABLE (
   file_url text,
   source_url text,
   source_id uuid,
-  published_date date,
+  published_date timestamptz,
   fetched_at timestamptz,
   brand_ids uuid[],
   segment_ids uuid[],

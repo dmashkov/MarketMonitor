@@ -100,11 +100,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_events_updated_at ON events;
 CREATE TRIGGER trigger_events_updated_at
   BEFORE UPDATE ON events
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trigger_ai_prompts_updated_at ON ai_prompts;
 CREATE TRIGGER trigger_ai_prompts_updated_at
   BEFORE UPDATE ON ai_prompts
   FOR EACH ROW

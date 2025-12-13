@@ -237,17 +237,22 @@ export const DocumentsLibrary: React.FC = () => {
       key: 'title',
       width: 300,
       ellipsis: true,
-      render: (title: string, record) => (
-        <Space direction="vertical" size={0}>
-          <Text strong>{title}</Text>
-          {record.description && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {record.description.substring(0, 100)}
-              {record.description.length > 100 && '...'}
-            </Text>
-          )}
-        </Space>
-      ),
+      render: (title: string, record) => {
+        const contentPreview = record.content_text?.substring(0, 200) || 'Нет текста';
+        return (
+          <Tooltip title={contentPreview} overlayStyle={{ maxWidth: '400px' }}>
+            <Space direction="vertical" size={0}>
+              <Text strong>{title}</Text>
+              {record.description && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {record.description.substring(0, 100)}
+                  {record.description.length > 100 && '...'}
+                </Text>
+              )}
+            </Space>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Дата публикации',
@@ -371,17 +376,22 @@ export const DocumentsLibrary: React.FC = () => {
       key: 'title',
       width: 300,
       ellipsis: true,
-      render: (title: string, record) => (
-        <Space direction="vertical" size={0}>
-          <Text strong>{title}</Text>
-          {record.description && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {record.description.substring(0, 100)}
-              {record.description.length > 100 && '...'}
-            </Text>
-          )}
-        </Space>
-      ),
+      render: (title: string, record) => {
+        const contentPreview = record.content_text?.substring(0, 200) || 'Нет текста';
+        return (
+          <Tooltip title={contentPreview} overlayStyle={{ maxWidth: '400px' }}>
+            <Space direction="vertical" size={0}>
+              <Text strong>{title}</Text>
+              {record.description && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {record.description.substring(0, 100)}
+                  {record.description.length > 100 && '...'}
+                </Text>
+              )}
+            </Space>
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Дата публикации',

@@ -68,6 +68,8 @@ CREATE TRIGGER on_auth_user_created
 -- TRIGGER: Update updated_at on user_profiles
 -- ============================================================================
 
+DROP TRIGGER IF EXISTS trigger_user_profiles_updated_at ON user_profiles;
+
 CREATE TRIGGER trigger_user_profiles_updated_at
   BEFORE UPDATE ON user_profiles
   FOR EACH ROW

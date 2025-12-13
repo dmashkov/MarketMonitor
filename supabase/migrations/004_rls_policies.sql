@@ -50,6 +50,7 @@ $$ LANGUAGE SQL SECURITY DEFINER;
 -- ============================================================================
 
 -- All authenticated active users can READ events
+DROP POLICY IF EXISTS "Users can view events" ON events;
 CREATE POLICY "Users can view events"
   ON events
   FOR SELECT
@@ -59,6 +60,7 @@ CREATE POLICY "Users can view events"
   );
 
 -- Only admins can CREATE events
+DROP POLICY IF EXISTS "Only admins can create events" ON events;
 CREATE POLICY "Only admins can create events"
   ON events
   FOR INSERT
@@ -68,6 +70,7 @@ CREATE POLICY "Only admins can create events"
   );
 
 -- Only admins can UPDATE events
+DROP POLICY IF EXISTS "Only admins can update events" ON events;
 CREATE POLICY "Only admins can update events"
   ON events
   FOR UPDATE
@@ -80,6 +83,7 @@ CREATE POLICY "Only admins can update events"
   );
 
 -- Only admins can DELETE events
+DROP POLICY IF EXISTS "Only admins can delete events" ON events;
 CREATE POLICY "Only admins can delete events"
   ON events
   FOR DELETE
@@ -93,6 +97,7 @@ CREATE POLICY "Only admins can delete events"
 -- ============================================================================
 
 -- All authenticated users can READ active prompts
+DROP POLICY IF EXISTS "Users can view active prompts" ON ai_prompts;
 CREATE POLICY "Users can view active prompts"
   ON ai_prompts
   FOR SELECT
@@ -102,6 +107,7 @@ CREATE POLICY "Users can view active prompts"
   );
 
 -- Only admins can CREATE prompts
+DROP POLICY IF EXISTS "Only admins can create prompts" ON ai_prompts;
 CREATE POLICY "Only admins can create prompts"
   ON ai_prompts
   FOR INSERT
@@ -111,6 +117,7 @@ CREATE POLICY "Only admins can create prompts"
   );
 
 -- Only admins can UPDATE prompts
+DROP POLICY IF EXISTS "Only admins can update prompts" ON ai_prompts;
 CREATE POLICY "Only admins can update prompts"
   ON ai_prompts
   FOR UPDATE
@@ -123,6 +130,7 @@ CREATE POLICY "Only admins can update prompts"
   );
 
 -- Only admins can DELETE prompts
+DROP POLICY IF EXISTS "Only admins can delete prompts" ON ai_prompts;
 CREATE POLICY "Only admins can delete prompts"
   ON ai_prompts
   FOR DELETE
@@ -136,6 +144,7 @@ CREATE POLICY "Only admins can delete prompts"
 -- ============================================================================
 
 -- All authenticated users can READ search runs
+DROP POLICY IF EXISTS "Users can view search runs" ON search_runs;
 CREATE POLICY "Users can view search runs"
   ON search_runs
   FOR SELECT
@@ -145,6 +154,7 @@ CREATE POLICY "Users can view search runs"
   );
 
 -- Only admins can CREATE search runs
+DROP POLICY IF EXISTS "Only admins can create search runs" ON search_runs;
 CREATE POLICY "Only admins can create search runs"
   ON search_runs
   FOR INSERT
@@ -154,6 +164,7 @@ CREATE POLICY "Only admins can create search runs"
   );
 
 -- Only admins can UPDATE search runs
+DROP POLICY IF EXISTS "Only admins can update search runs" ON search_runs;
 CREATE POLICY "Only admins can update search runs"
   ON search_runs
   FOR UPDATE
@@ -170,6 +181,7 @@ CREATE POLICY "Only admins can update search runs"
 -- ============================================================================
 
 -- All authenticated users can READ schedules
+DROP POLICY IF EXISTS "Users can view schedules" ON job_schedules;
 CREATE POLICY "Users can view schedules"
   ON job_schedules
   FOR SELECT
@@ -179,6 +191,7 @@ CREATE POLICY "Users can view schedules"
   );
 
 -- Only admins can CREATE schedules
+DROP POLICY IF EXISTS "Only admins can create schedules" ON job_schedules;
 CREATE POLICY "Only admins can create schedules"
   ON job_schedules
   FOR INSERT
@@ -188,6 +201,7 @@ CREATE POLICY "Only admins can create schedules"
   );
 
 -- Only admins can UPDATE schedules
+DROP POLICY IF EXISTS "Only admins can update schedules" ON job_schedules;
 CREATE POLICY "Only admins can update schedules"
   ON job_schedules
   FOR UPDATE
@@ -200,6 +214,7 @@ CREATE POLICY "Only admins can update schedules"
   );
 
 -- Only admins can DELETE schedules
+DROP POLICY IF EXISTS "Only admins can delete schedules" ON job_schedules;
 CREATE POLICY "Only admins can delete schedules"
   ON job_schedules
   FOR DELETE
@@ -213,6 +228,7 @@ CREATE POLICY "Only admins can delete schedules"
 -- ============================================================================
 
 -- Users can READ their own profile
+DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
 CREATE POLICY "Users can view own profile"
   ON user_profiles
   FOR SELECT
@@ -222,6 +238,7 @@ CREATE POLICY "Users can view own profile"
   );
 
 -- Admins can READ all profiles
+DROP POLICY IF EXISTS "Admins can view all profiles" ON user_profiles;
 CREATE POLICY "Admins can view all profiles"
   ON user_profiles
   FOR SELECT
@@ -231,6 +248,7 @@ CREATE POLICY "Admins can view all profiles"
   );
 
 -- Only admins can CREATE profiles (via trigger, but allow for completeness)
+DROP POLICY IF EXISTS "Only admins can create profiles" ON user_profiles;
 CREATE POLICY "Only admins can create profiles"
   ON user_profiles
   FOR INSERT
@@ -240,6 +258,7 @@ CREATE POLICY "Only admins can create profiles"
   );
 
 -- Users can UPDATE their own profile (limited fields)
+DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
 CREATE POLICY "Users can update own profile"
   ON user_profiles
   FOR UPDATE
@@ -253,6 +272,7 @@ CREATE POLICY "Users can update own profile"
   );
 
 -- Only admins can UPDATE any profile
+DROP POLICY IF EXISTS "Admins can update any profile" ON user_profiles;
 CREATE POLICY "Admins can update any profile"
   ON user_profiles
   FOR UPDATE
@@ -265,6 +285,7 @@ CREATE POLICY "Admins can update any profile"
   );
 
 -- Only admins can DELETE profiles
+DROP POLICY IF EXISTS "Only admins can delete profiles" ON user_profiles;
 CREATE POLICY "Only admins can delete profiles"
   ON user_profiles
   FOR DELETE

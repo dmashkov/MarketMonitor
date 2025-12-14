@@ -14,6 +14,7 @@ import { DocumentsLibrary } from '../documents';
 import { SourcesManager } from '../sources';
 import { UsersManager } from '../users';
 import { PromptsManager } from '../prompts';
+import { RunPipelinePanel } from '../pipeline';
 
 /**
  * Компонент админ-панели
@@ -69,6 +70,11 @@ export const AdminPanel: React.FC = () => {
               children: <PromptsManager />,
             },
             {
+              key: 'pipeline',
+              label: '🚀 Запуск Pipeline',
+              children: <RunPipelinePanel />,
+            },
+            {
               key: 'scheduler',
               label: '⏱️ Расписание',
               children: (
@@ -81,13 +87,13 @@ export const AdminPanel: React.FC = () => {
                             ⏱️ Планировщик задач
                           </p>
                           <p style={{ color: '#666' }}>
-                            Функционал будет реализован в Phase 3
+                            Функционал будет реализован в Phase 5
                           </p>
                         </div>
                       }
                     />
                     <div style={{ marginTop: '24px' }}>
-                      <Tag color="blue">Phase 3</Tag>
+                      <Tag color="blue">Phase 5</Tag>
                       <p style={{ color: '#999', fontSize: '12px', marginTop: '12px' }}>
                         Будет включено: управление расписаниями, CRON выражения, логи
                       </p>

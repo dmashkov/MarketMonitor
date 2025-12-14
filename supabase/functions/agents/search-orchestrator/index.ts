@@ -127,14 +127,17 @@ async function updateSearchRun(
     documents_created?: number;
     events_created?: number;
     error_message?: string;
-  }
+  },
+  startTime?: number
 ): Promise<void> {
+  const executionTimeMs = startTime ? Date.now() - startTime : null;
+
   const { error } = await supabase
     .from('search_runs')
     .update({
       ...updates,
       completed_at: new Date().toISOString(),
-      execution_time_ms: Date.now(),
+      ...(executionTimeMs && { execution_time_ms: executionTimeMs }),
     })
     .eq('id', searchRunId);
 
@@ -340,11 +343,15 @@ async function handleRequest(req: Request): Promise<Response> {
 
           // 6. Update search_run as completed
           const durationSeconds = (Date.now() - startTime) / 1000;
-          await updateSearchRun(searchRun.id, {
-            status: 'completed',
-            documents_created: documentIds.length,
-            events_created: 0, // Will be updated by Event Extractor in Part 6
-          });
+          await updateSearchRun(
+            searchRun.id,
+            {
+              status: 'completed',
+              documents_created: documentIds.length,
+              events_created: 0, // Will be updated by Event Extractor in Part 6
+            },
+            startTime
+          );
 
           // 7. Return success response
           return new Response(
@@ -374,10 +381,14 @@ async function handleRequest(req: Request): Promise<Response> {
             processorMsg
           );
 
-          await updateSearchRun(searchRun.id, {
-            status: 'failed',
-            error_message: `Document Processor failed: ${processorMsg}`,
-          });
+          await updateSearchRun(
+            searchRun.id,
+            {
+              status: 'failed',
+              error_message: `Document Processor failed: ${processorMsg}`,
+            },
+            startTime
+          );
 
           throw processorError;
         }
@@ -393,10 +404,14 @@ async function handleRequest(req: Request): Promise<Response> {
           fetcherMsg
         );
 
-        await updateSearchRun(searchRun.id, {
-          status: 'failed',
-          error_message: `Content Fetcher failed: ${fetcherMsg}`,
-        });
+        await updateSearchRun(
+          searchRun.id,
+          {
+            status: 'failed',
+            error_message: `Content Fetcher failed: ${fetcherMsg}`,
+          },
+          startTime
+        );
 
         throw fetcherError;
       }
@@ -412,10 +427,14 @@ async function handleRequest(req: Request): Promise<Response> {
         hunterMsg
       );
 
-      await updateSearchRun(searchRun.id, {
-        status: 'failed',
-        error_message: `Source Hunter failed: ${hunterMsg}`,
-      });
+      await updateSearchRun(
+        searchRun.id,
+        {
+          status: 'failed',
+          error_message: `Source Hunter failed: ${hunterMsg}`,
+        },
+        startTime
+      );
 
       throw hunterError;
     }

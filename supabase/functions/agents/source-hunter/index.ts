@@ -298,6 +298,7 @@ async function handler(request: Request): Promise<Response> {
 
     // Step 3: Search documents and save to DB
     const urls: string[] = [];
+    const documentIds: string[] = [];
     let documentsCreated = 0;
 
     for (const source of sources) {
@@ -315,6 +316,7 @@ async function handler(request: Request): Promise<Response> {
           if (docId) {
             documentsCreated++;
             urls.push(result.url);
+            documentIds.push(docId);
           }
         }
       } catch (error) {
@@ -330,6 +332,7 @@ async function handler(request: Request): Promise<Response> {
       JSON.stringify({
         status: 'success',
         documents_created: documentsCreated,
+        document_ids: documentIds,
         urls,
         message: `Found and saved ${documentsCreated} documents`,
       } as SourceHunterResponse),

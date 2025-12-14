@@ -154,17 +154,17 @@ SELECT
   'MVP Test Profile - All Segments',
   'Initial test profile monitoring all segments and event types in Russia',
   true,
-  (SELECT ARRAY_AGG(id) FROM public.segments WHERE is_active = true),
+  (SELECT ARRAY_AGG(seg.id) FROM public.segments seg WHERE seg.is_active = true),
   ARRAY[]::UUID[],
-  (SELECT ARRAY_AGG(id) FROM public.geographies WHERE is_active = true),
-  (SELECT ARRAY_AGG(id) FROM public.event_types WHERE is_active = true),
+  (SELECT ARRAY_AGG(geo.id) FROM public.geographies geo WHERE geo.is_active = true),
+  (SELECT ARRAY_AGG(et.id) FROM public.event_types et WHERE et.is_active = true),
   5,
   20,
   0.85,
-  (SELECT id FROM public.prompt_templates WHERE name = 'Document Classification' AND stage = 'classify' LIMIT 1)
+  (SELECT pt.id FROM public.prompt_templates pt WHERE pt.name = 'Document Classification' AND pt.stage = 'classify' LIMIT 1)
 WHERE NOT EXISTS (
-  SELECT 1 FROM public.monitoring_profiles
-  WHERE name = 'MVP Test Profile - All Segments'
+  SELECT 1 FROM public.monitoring_profiles mp
+  WHERE mp.name = 'MVP Test Profile - All Segments'
 );
 
 -- ============================================================================

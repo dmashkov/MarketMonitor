@@ -35,6 +35,9 @@ CREATE EXTENSION IF NOT EXISTS vector;
 --   });
 -- ============================================================================
 
+-- Drop existing function to allow return type changes
+DROP FUNCTION IF EXISTS search_documents_by_embedding(vector, float, int);
+
 CREATE OR REPLACE FUNCTION search_documents_by_embedding(
   query_embedding vector(1536),
   match_threshold float DEFAULT 0.7,

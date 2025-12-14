@@ -31,13 +31,13 @@ CREATE TABLE IF NOT EXISTS events (
 );
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_date ON events(date DESC);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_segment ON events(segment);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_event_type ON events(event_type);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_company ON events(company);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_criticality ON events(criticality DESC);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_channel ON events(channel);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_search_run_id ON events(found_by_search_run_id);
+CREATE INDEX IF NOT EXISTS idx_events_date ON events(date DESC);
+CREATE INDEX IF NOT EXISTS idx_events_segment ON events(segment);
+CREATE INDEX IF NOT EXISTS idx_events_event_type ON events(event_type);
+CREATE INDEX IF NOT EXISTS idx_events_company ON events(company);
+CREATE INDEX IF NOT EXISTS idx_events_criticality ON events(criticality DESC);
+CREATE INDEX IF NOT EXISTS idx_events_channel ON events(channel);
+CREATE INDEX IF NOT EXISTS idx_events_search_run_id ON events(found_by_search_run_id);
 
 -- ============================================================================
 -- AI PROMPTS TABLE
@@ -57,9 +57,9 @@ CREATE TABLE IF NOT EXISTS ai_prompts (
 );
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_ai_prompts_is_active ON ai_prompts(is_active);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_ai_prompts_search_type ON ai_prompts(search_type);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_ai_prompts_created_by ON ai_prompts(created_by);
+CREATE INDEX IF NOT EXISTS idx_ai_prompts_is_active ON ai_prompts(is_active);
+CREATE INDEX IF NOT EXISTS idx_ai_prompts_search_type ON ai_prompts(search_type);
+CREATE INDEX IF NOT EXISTS idx_ai_prompts_created_by ON ai_prompts(created_by);
 
 -- ============================================================================
 -- SEARCH RUNS TABLE
@@ -81,12 +81,12 @@ CREATE TABLE IF NOT EXISTS search_runs (
 );
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_search_runs_prompt_id ON search_runs(prompt_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_search_runs_status ON search_runs(status);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_search_runs_triggered_by ON search_runs(triggered_by);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_search_runs_is_scheduled ON search_runs(is_scheduled);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_search_runs_created_at ON search_runs(created_at DESC);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_search_runs_started_at ON search_runs(started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_search_runs_prompt_id ON search_runs(prompt_id);
+CREATE INDEX IF NOT EXISTS idx_search_runs_status ON search_runs(status);
+CREATE INDEX IF NOT EXISTS idx_search_runs_triggered_by ON search_runs(triggered_by);
+CREATE INDEX IF NOT EXISTS idx_search_runs_is_scheduled ON search_runs(is_scheduled);
+CREATE INDEX IF NOT EXISTS idx_search_runs_created_at ON search_runs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_search_runs_started_at ON search_runs(started_at DESC);
 
 -- ============================================================================
 -- TRIGGER FOR UPDATED_AT

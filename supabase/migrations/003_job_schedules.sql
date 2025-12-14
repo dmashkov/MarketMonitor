@@ -29,12 +29,12 @@ CREATE TABLE IF NOT EXISTS job_schedules (
 );
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_job_schedules_prompt_id ON job_schedules(prompt_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_job_schedules_is_active ON job_schedules(is_active);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_job_schedules_next_run_at ON job_schedules(next_run_at)
+CREATE INDEX IF NOT EXISTS idx_job_schedules_prompt_id ON job_schedules(prompt_id);
+CREATE INDEX IF NOT EXISTS idx_job_schedules_is_active ON job_schedules(is_active);
+CREATE INDEX IF NOT EXISTS idx_job_schedules_next_run_at ON job_schedules(next_run_at)
   WHERE is_active = true;
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_job_schedules_created_by ON job_schedules(created_by);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_job_schedules_created_at ON job_schedules(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_job_schedules_created_by ON job_schedules(created_by);
+CREATE INDEX IF NOT EXISTS idx_job_schedules_created_at ON job_schedules(created_at DESC);
 
 -- ============================================================================
 -- TRIGGER: Update updated_at on job_schedules

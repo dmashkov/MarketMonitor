@@ -72,8 +72,5 @@ USING (
 );
 
 -- ============================================================================
--- Комментарии
+-- Note: Cannot add comments to system tables (storage.buckets, storage.objects)
 -- ============================================================================
-
-COMMENT ON TABLE storage.buckets IS 'Storage buckets для файлов';
-COMMENT ON TABLE storage.objects IS 'Файлы в Storage buckets';

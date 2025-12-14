@@ -193,86 +193,60 @@ CREATE POLICY "Document event types viewable by authenticated"
   TO authenticated USING (auth.role() = 'authenticated');
 
 -- ============================================================================
--- 7. SEARCH_RUNS TABLE (UPDATE EXISTING)
+-- 7. PROMPT_TEMPLATES TABLE (NEW) - MUST BE BEFORE monitoring_profiles
 -- ============================================================================
 
-ALTER TABLE IF EXISTS public.search_runs ADD COLUMN IF NOT EXISTS monitoring_profile_id UUID REFERENCES public.monitoring_profiles(id) ON DELETE SET NULL;
-
-CREATE INDEX IF NOT EXISTS idx_search_runs_profile ON public.search_runs(monitoring_profile_id);
-
--- ============================================================================
--- 8. SEARCH_RUNS_STAGES TABLE (NEW)
--- ============================================================================
-
-CREATE TABLE IF NOT EXISTS public.search_runs_stages (
+CREATE TABLE IF NOT EXISTS public.prompt_templates (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-  -- Reference
-  search_run_id UUID NOT NULL REFERENCES public.search_runs(id) ON DELETE CASCADE,
+  -- Identification
+  name VARCHAR(255) NOT NULL,
+  stage VARCHAR(50) NOT NULL,
 
-  -- Stage tracking
-  stage_name VARCHAR(100) NOT NULL,
-  status VARCHAR(50) NOT NULL,
+  -- Template with placeholders
+  template_text TEXT NOT NULL,
 
-  -- Metrics
-  documents_processed INT DEFAULT 0,
-
-  -- Timing
-  started_at TIMESTAMPTZ DEFAULT NOW(),
-  completed_at TIMESTAMPTZ,
-
-  -- Error
-  error_message TEXT,
-
-  -- Optional metadata
-  metadata JSONB DEFAULT '{}'
-);
-
-CREATE INDEX IF NOT EXISTS idx_search_runs_stages_run ON public.search_runs_stages(search_run_id);
-CREATE INDEX IF NOT EXISTS idx_search_runs_stages_stage ON public.search_runs_stages(stage_name);
-CREATE INDEX IF NOT EXISTS idx_search_runs_stages_status ON public.search_runs_stages(status);
-
-ALTER TABLE public.search_runs_stages ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Search run stages viewable by authenticated" ON public.search_runs_stages;
-CREATE POLICY "Search run stages viewable by authenticated"
-  ON public.search_runs_stages FOR SELECT
-  TO authenticated USING (auth.role() = 'authenticated');
-
--- ============================================================================
--- 9. SEARCH_RUNS_PROMPTS TABLE (NEW)
--- ============================================================================
-
-CREATE TABLE IF NOT EXISTS public.search_runs_prompts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-  -- Reference
-  search_run_id UUID NOT NULL REFERENCES public.search_runs(id) ON DELETE CASCADE,
-
-  -- Template and version
-  prompt_template_id UUID REFERENCES public.prompt_templates(id) ON DELETE SET NULL,
-  stage_name VARCHAR(100) NOT NULL,
-
-  -- The actual prompt sent to LLM (for audit and A/B testing)
-  actual_prompt_text TEXT NOT NULL,
-
-  -- Optional: parameters used
-  prompt_parameters JSONB DEFAULT '{}',
+  -- Metadata
+  is_active BOOLEAN DEFAULT TRUE,
+  description TEXT,
 
   -- Audit
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by UUID REFERENCES public.auth.users(id) ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_search_runs_prompts_run ON public.search_runs_prompts(search_run_id);
-CREATE INDEX IF NOT EXISTS idx_search_runs_prompts_template ON public.search_runs_prompts(prompt_template_id);
+CREATE INDEX IF NOT EXISTS idx_prompt_templates_stage ON public.prompt_templates(stage);
+CREATE INDEX IF NOT EXISTS idx_prompt_templates_active ON public.prompt_templates(is_active);
 
-ALTER TABLE public.search_runs_prompts ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Search run prompts viewable by authenticated" ON public.search_runs_prompts;
-CREATE POLICY "Search run prompts viewable by authenticated"
-  ON public.search_runs_prompts FOR SELECT
+-- Trigger for updated_at
+CREATE OR REPLACE FUNCTION update_prompt_templates_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_prompt_templates_updated_at ON public.prompt_templates;
+CREATE TRIGGER trigger_prompt_templates_updated_at
+  BEFORE UPDATE ON public.prompt_templates
+  FOR EACH ROW
+  EXECUTE FUNCTION update_prompt_templates_updated_at();
+
+ALTER TABLE public.prompt_templates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Prompt templates viewable by authenticated" ON public.prompt_templates;
+CREATE POLICY "Prompt templates viewable by authenticated"
+  ON public.prompt_templates FOR SELECT
   TO authenticated USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Prompt templates manageable by admins" ON public.prompt_templates;
+CREATE POLICY "Prompt templates manageable by admins"
+  ON public.prompt_templates FOR ALL
+  USING (EXISTS(SELECT 1 FROM public.user_profiles WHERE id = auth.uid() AND role = 'admin'));
+
 -- ============================================================================
--- 10. MONITORING_PROFILES TABLE (NEW)
+-- 8. MONITORING_PROFILES TABLE (NEW) - AFTER prompt_templates
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS public.monitoring_profiles (
@@ -338,60 +312,86 @@ CREATE POLICY "Monitoring profiles manageable by admins"
   USING (EXISTS(SELECT 1 FROM public.user_profiles WHERE id = auth.uid() AND role = 'admin'));
 
 -- ============================================================================
--- 11. PROMPT_TEMPLATES TABLE (NEW)
+-- 9. SEARCH_RUNS TABLE (UPDATE EXISTING) - NOW monitoring_profiles exists
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS public.prompt_templates (
+ALTER TABLE IF EXISTS public.search_runs ADD COLUMN IF NOT EXISTS monitoring_profile_id UUID REFERENCES public.monitoring_profiles(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_search_runs_profile ON public.search_runs(monitoring_profile_id);
+
+-- ============================================================================
+-- 10. SEARCH_RUNS_STAGES TABLE (NEW)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.search_runs_stages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-  -- Identification
-  name VARCHAR(255) NOT NULL,
-  stage VARCHAR(50) NOT NULL,
+  -- Reference
+  search_run_id UUID NOT NULL REFERENCES public.search_runs(id) ON DELETE CASCADE,
 
-  -- Template with placeholders
-  template_text TEXT NOT NULL,
+  -- Stage tracking
+  stage_name VARCHAR(100) NOT NULL,
+  status VARCHAR(50) NOT NULL,
 
-  -- Metadata
-  is_active BOOLEAN DEFAULT TRUE,
-  description TEXT,
+  -- Metrics
+  documents_processed INT DEFAULT 0,
 
-  -- Audit
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID REFERENCES public.auth.users(id) ON DELETE SET NULL
+  -- Timing
+  started_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,
+
+  -- Error
+  error_message TEXT,
+
+  -- Optional metadata
+  metadata JSONB DEFAULT '{}'
 );
 
-CREATE INDEX IF NOT EXISTS idx_prompt_templates_stage ON public.prompt_templates(stage);
-CREATE INDEX IF NOT EXISTS idx_prompt_templates_active ON public.prompt_templates(is_active);
+CREATE INDEX IF NOT EXISTS idx_search_runs_stages_run ON public.search_runs_stages(search_run_id);
+CREATE INDEX IF NOT EXISTS idx_search_runs_stages_stage ON public.search_runs_stages(stage_name);
+CREATE INDEX IF NOT EXISTS idx_search_runs_stages_status ON public.search_runs_stages(status);
 
--- Trigger for updated_at
-CREATE OR REPLACE FUNCTION update_prompt_templates_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trigger_prompt_templates_updated_at ON public.prompt_templates;
-CREATE TRIGGER trigger_prompt_templates_updated_at
-  BEFORE UPDATE ON public.prompt_templates
-  FOR EACH ROW
-  EXECUTE FUNCTION update_prompt_templates_updated_at();
-
-ALTER TABLE public.prompt_templates ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Prompt templates viewable by authenticated" ON public.prompt_templates;
-CREATE POLICY "Prompt templates viewable by authenticated"
-  ON public.prompt_templates FOR SELECT
+ALTER TABLE public.search_runs_stages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Search run stages viewable by authenticated" ON public.search_runs_stages;
+CREATE POLICY "Search run stages viewable by authenticated"
+  ON public.search_runs_stages FOR SELECT
   TO authenticated USING (auth.role() = 'authenticated');
 
-DROP POLICY IF EXISTS "Prompt templates manageable by admins" ON public.prompt_templates;
-CREATE POLICY "Prompt templates manageable by admins"
-  ON public.prompt_templates FOR ALL
-  USING (EXISTS(SELECT 1 FROM public.user_profiles WHERE id = auth.uid() AND role = 'admin'));
+-- ============================================================================
+-- 11. SEARCH_RUNS_PROMPTS TABLE (NEW)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.search_runs_prompts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+  -- Reference
+  search_run_id UUID NOT NULL REFERENCES public.search_runs(id) ON DELETE CASCADE,
+
+  -- Template and version
+  prompt_template_id UUID REFERENCES public.prompt_templates(id) ON DELETE SET NULL,
+  stage_name VARCHAR(100) NOT NULL,
+
+  -- The actual prompt sent to LLM (for audit and A/B testing)
+  actual_prompt_text TEXT NOT NULL,
+
+  -- Optional: parameters used
+  prompt_parameters JSONB DEFAULT '{}',
+
+  -- Audit
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_search_runs_prompts_run ON public.search_runs_prompts(search_run_id);
+CREATE INDEX IF NOT EXISTS idx_search_runs_prompts_template ON public.search_runs_prompts(prompt_template_id);
+
+ALTER TABLE public.search_runs_prompts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Search run prompts viewable by authenticated" ON public.search_runs_prompts;
+CREATE POLICY "Search run prompts viewable by authenticated"
+  ON public.search_runs_prompts FOR SELECT
+  TO authenticated USING (auth.role() = 'authenticated');
 
 -- ============================================================================
--- 12. EVENTS TABLE (UPDATE EXISTING)
+-- 10. EVENTS TABLE (UPDATE EXISTING)
 -- ============================================================================
 
 ALTER TABLE IF EXISTS public.events

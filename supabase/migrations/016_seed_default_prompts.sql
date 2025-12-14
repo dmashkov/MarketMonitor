@@ -155,7 +155,8 @@ INSERT INTO ai_prompts (
     NULL,
     NULL,
     NULL
-  );
+  )
+ON CONFLICT (name) DO NOTHING;
 
 -- Add RLS policy for ai_prompts if not exists
 DROP POLICY IF EXISTS "authenticated_users_read_prompts" ON ai_prompts;

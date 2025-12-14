@@ -145,13 +145,16 @@ WITH template_id AS (
   LIMIT 1
 ),
 segment_data AS (
-  SELECT ARRAY_AGG(id) as segment_ids FROM public.segments WHERE is_active = true LIMIT 8
+  SELECT ARRAY_AGG(id) as segment_ids
+  FROM (SELECT id FROM public.segments WHERE is_active = true LIMIT 8) as segments_subset
 ),
 geography_data AS (
-  SELECT ARRAY_AGG(id) as geography_ids FROM public.geographies WHERE is_active = true LIMIT 10
+  SELECT ARRAY_AGG(id) as geography_ids
+  FROM (SELECT id FROM public.geographies WHERE is_active = true LIMIT 10) as geographies_subset
 ),
 event_type_data AS (
-  SELECT ARRAY_AGG(id) as event_type_ids FROM public.event_types WHERE is_active = true LIMIT 9
+  SELECT ARRAY_AGG(id) as event_type_ids
+  FROM (SELECT id FROM public.event_types WHERE is_active = true LIMIT 9) as event_types_subset
 )
 INSERT INTO public.monitoring_profiles (
   name,

@@ -56,24 +56,24 @@ CREATE TABLE IF NOT EXISTS documents (
 -- ============================================================================
 
 -- Основные индексы
-CREATE INDEX idx_documents_source_id ON documents(source_id);
-CREATE INDEX idx_documents_document_type ON documents(document_type);
-CREATE INDEX idx_documents_published_date ON documents(published_date DESC NULLS LAST);
-CREATE INDEX idx_documents_fetched_at ON documents(fetched_at DESC);
-CREATE INDEX idx_documents_created_by ON documents(created_by);
+CREATE INDEX IF NOT EXISTS idx_documents_source_id ON documents(source_id);
+CREATE INDEX IF NOT EXISTS idx_documents_document_type ON documents(document_type);
+CREATE INDEX IF NOT EXISTS idx_documents_published_date ON documents(published_date DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_documents_fetched_at ON documents(fetched_at DESC);
+CREATE INDEX IF NOT EXISTS idx_documents_created_by ON documents(created_by);
 
 -- GIN индексы для массивов (быстрый поиск по вхождению)
-CREATE INDEX idx_documents_brand_ids ON documents USING GIN(brand_ids);
-CREATE INDEX idx_documents_segment_ids ON documents USING GIN(segment_ids);
-CREATE INDEX idx_documents_geography_ids ON documents USING GIN(geography_ids);
+CREATE INDEX IF NOT EXISTS idx_documents_brand_ids ON documents USING GIN(brand_ids);
+CREATE INDEX IF NOT EXISTS idx_documents_segment_ids ON documents USING GIN(segment_ids);
+CREATE INDEX IF NOT EXISTS idx_documents_geography_ids ON documents USING GIN(geography_ids);
 
 -- Full-text search индекс (русский язык)
-CREATE INDEX idx_documents_content_text_fts ON documents
+CREATE INDEX IF NOT EXISTS idx_documents_content_text_fts ON documents
   USING gin(to_tsvector('russian', COALESCE(content_text, '')));
 
 -- Векторный индекс для семантического поиска (IVFFlat)
 -- lists = 100 оптимально для ~10K-100K документов
-CREATE INDEX idx_documents_embedding ON documents
+CREATE INDEX IF NOT EXISTS idx_documents_embedding ON documents
   USING ivfflat (embedding vector_cosine_ops)
   WITH (lists = 100);
 

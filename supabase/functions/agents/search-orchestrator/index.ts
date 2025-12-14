@@ -22,6 +22,7 @@ import {
   SourceHunterResponse,
   ContentFetcherResponse,
   DocumentProcessorResponse,
+  PromptTemplate,
 } from './types.ts';
 
 const corsHeaders = {
@@ -58,6 +59,23 @@ async function loadMonitoringProfile(profileId: string): Promise<MonitoringProfi
   }
 
   return data as MonitoringProfile;
+}
+
+/**
+ * Загрузить prompt template по ID
+ */
+async function loadPromptTemplate(templateId: string): Promise<PromptTemplate> {
+  const { data, error } = await supabase
+    .from('prompt_templates')
+    .select('*')
+    .eq('id', templateId)
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to load prompt template: ${error.message}`);
+  }
+
+  return data as PromptTemplate;
 }
 
 /**
@@ -151,7 +169,9 @@ async function updateSearchRun(
  */
 async function runSourceHunter(
   monitoringProfileId: string,
-  searchRunId: string
+  searchRunId: string,
+  prompt: string,
+  profile: MonitoringProfile
 ): Promise<SourceHunterResponse> {
   const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/agents/source-hunter`;
 
@@ -162,8 +182,11 @@ async function runSourceHunter(
       'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY') || ''}`,
     },
     body: JSON.stringify({
+      prompt,
       monitoring_profile_id: monitoringProfileId,
       search_run_id: searchRunId,
+      segment_ids: profile.segment_ids,
+      geography_ids: profile.geography_ids,
     }),
   });
 
@@ -286,14 +309,26 @@ async function handleRequest(req: Request): Promise<Response> {
     console.log(`Loading monitoring profile: ${body.monitoring_profile_id}`);
     const profile = await loadMonitoringProfile(body.monitoring_profile_id);
 
-    // 2. Create search_run record
+    // 2. Load prompt template
+    if (!profile.prompt_template_id) {
+      throw new Error('Monitoring profile has no prompt template configured');
+    }
+    console.log(`Loading prompt template: ${profile.prompt_template_id}`);
+    const promptTemplate = await loadPromptTemplate(profile.prompt_template_id);
+
+    // 3. Create search_run record
     console.log('Creating search_run...');
     const searchRun = await createSearchRun(profile.id, userId);
 
-    // 3. Run Source Hunter
+    // 4. Run Source Hunter
     try {
       console.log('Running Source Hunter...');
-      const sourceHunterResult = await runSourceHunter(profile.id, searchRun.id);
+      const sourceHunterResult = await runSourceHunter(
+        profile.id,
+        searchRun.id,
+        promptTemplate.template_text,
+        profile
+      );
 
       await createSearchRunStage(
         searchRun.id,
@@ -313,7 +348,7 @@ async function handleRequest(req: Request): Promise<Response> {
         throw new Error('No documents created by Source Hunter');
       }
 
-      // 4. Run Content Fetcher
+      // 5. Run Content Fetcher
       try {
         console.log('Running Content Fetcher...');
         const fetcherResult = await runContentFetcher(documentIds, searchRun.id);
@@ -326,7 +361,7 @@ async function handleRequest(req: Request): Promise<Response> {
           fetcherResult.status !== 'success' ? `${fetcherResult.documents_failed} documents failed` : undefined
         );
 
-        // 5. Run Document Processor
+        // 6. Run Document Processor
         try {
           console.log('Running Document Processor...');
           const processorResult = await runDocumentProcessor(documentIds, searchRun.id);
@@ -341,7 +376,7 @@ async function handleRequest(req: Request): Promise<Response> {
               : undefined
           );
 
-          // 6. Update search_run as completed
+          // 7. Update search_run as completed
           const durationSeconds = (Date.now() - startTime) / 1000;
           await updateSearchRun(
             searchRun.id,
@@ -353,7 +388,7 @@ async function handleRequest(req: Request): Promise<Response> {
             startTime
           );
 
-          // 7. Return success response
+          // 8. Return success response
           return new Response(
             JSON.stringify({
               status: 'completed',

@@ -269,10 +269,21 @@ export const PipelineLogs: React.FC = () => {
     },
   ];
 
-  const expandedRowRender = async (record: SearchRun) => {
-    const stages = await fetchStages(record.id);
+  const expandedRowRender = (record: SearchRun) => {
+    // Use React Query to auto-update stages
+    const { data: stages, isLoading: stagesLoading } = useQuery({
+      queryKey: ['search-run-stages', record.id],
+      queryFn: async () => {
+        return await fetchStages(record.id);
+      },
+      refetchInterval: 2000, // Auto-refresh every 2 seconds while running
+    });
 
-    if (stages.length === 0) {
+    if (stagesLoading) {
+      return <Spin />;
+    }
+
+    if (!stages || stages.length === 0) {
       return <Empty description="Нет данных о стадиях" />;
     }
 

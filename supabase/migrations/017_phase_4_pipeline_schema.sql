@@ -48,11 +48,10 @@ CREATE TRIGGER trigger_event_types_updated_at
 -- RLS
 ALTER TABLE public.event_types ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Event types viewable by authenticated" ON public.event_types;
-CREATE POLICY "Event types viewable by authenticated"
+DROP POLICY IF EXISTS "Event types viewable by all" ON public.event_types;
+CREATE POLICY "Event types viewable by all"
   ON public.event_types FOR SELECT
-  TO authenticated
-  USING (auth.role() = 'authenticated');
+  USING (true);
 
 DROP POLICY IF EXISTS "Event types manageable by admins" ON public.event_types;
 CREATE POLICY "Event types manageable by admins"
@@ -236,9 +235,10 @@ CREATE TRIGGER trigger_prompt_templates_updated_at
 
 ALTER TABLE public.prompt_templates ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Prompt templates viewable by authenticated" ON public.prompt_templates;
-CREATE POLICY "Prompt templates viewable by authenticated"
+DROP POLICY IF EXISTS "Prompt templates viewable by all" ON public.prompt_templates;
+CREATE POLICY "Prompt templates viewable by all"
   ON public.prompt_templates FOR SELECT
-  TO authenticated USING (auth.role() = 'authenticated');
+  USING (true);
 
 DROP POLICY IF EXISTS "Prompt templates manageable by admins" ON public.prompt_templates;
 CREATE POLICY "Prompt templates manageable by admins"
@@ -302,9 +302,10 @@ CREATE TRIGGER trigger_monitoring_profiles_updated_at
 
 ALTER TABLE public.monitoring_profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Monitoring profiles viewable by authenticated" ON public.monitoring_profiles;
-CREATE POLICY "Monitoring profiles viewable by authenticated"
+DROP POLICY IF EXISTS "Monitoring profiles viewable by all" ON public.monitoring_profiles;
+CREATE POLICY "Monitoring profiles viewable by all"
   ON public.monitoring_profiles FOR SELECT
-  TO authenticated USING (auth.role() = 'authenticated');
+  USING (true);
 
 DROP POLICY IF EXISTS "Monitoring profiles manageable by admins" ON public.monitoring_profiles;
 CREATE POLICY "Monitoring profiles manageable by admins"

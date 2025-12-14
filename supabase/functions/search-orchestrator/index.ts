@@ -171,15 +171,25 @@ async function runSourceHunter(
   monitoringProfileId: string,
   searchRunId: string,
   prompt: string,
-  profile: MonitoringProfile
+  profile: MonitoringProfile,
+  authHeader: string
 ): Promise<SourceHunterResponse> {
-  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/agents/source-hunter`;
+  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/source-hunter`;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+
+  console.log('🔍 Calling Source Hunter:', {
+    url: functionUrl,
+    hasAuthHeader: !!authHeader,
+    hasAnonKey: !!anonKey,
+    prompt: prompt.substring(0, 50) + '...',
+  });
 
   const response = await fetch(functionUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY') || ''}`,
+      'apikey': anonKey,
+      ...(authHeader && { 'Authorization': authHeader }),
     },
     body: JSON.stringify({
       prompt,
@@ -190,8 +200,11 @@ async function runSourceHunter(
     }),
   });
 
+  console.log('📡 Source Hunter response:', response.status, response.statusText);
+
   if (!response.ok) {
     const error = await response.text();
+    console.error('❌ Source Hunter error:', response.status, error);
     throw new Error(`Source Hunter failed: ${response.status} - ${error}`);
   }
 
@@ -204,15 +217,18 @@ async function runSourceHunter(
  */
 async function runContentFetcher(
   documentIds: string[],
-  searchRunId: string
+  searchRunId: string,
+  authHeader: string
 ): Promise<ContentFetcherResponse> {
-  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/agents/content-fetcher`;
+  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/content-fetcher`;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 
   const response = await fetch(functionUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY') || ''}`,
+      'apikey': anonKey,
+      ...(authHeader && { 'Authorization': authHeader }),
     },
     body: JSON.stringify({
       document_ids: documentIds,
@@ -234,15 +250,18 @@ async function runContentFetcher(
  */
 async function runDocumentProcessor(
   documentIds: string[],
-  searchRunId: string
+  searchRunId: string,
+  authHeader: string
 ): Promise<DocumentProcessorResponse> {
-  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/agents/document-processor`;
+  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/document-processor`;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 
   const response = await fetch(functionUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY') || ''}`,
+      'apikey': anonKey,
+      ...(authHeader && { 'Authorization': authHeader }),
     },
     body: JSON.stringify({
       document_ids: documentIds,
@@ -284,7 +303,13 @@ async function handleRequest(req: Request): Promise<Response> {
   const startTime = Date.now();
 
   try {
+    console.log('🚀 Search Orchestrator started');
+    console.log('📌 SUPABASE_URL:', Deno.env.get('SUPABASE_URL'));
+    console.log('📌 SUPABASE_ANON_KEY exists:', !!Deno.env.get('SUPABASE_ANON_KEY'));
+
     const body = (await req.json()) as SearchOrchestratorRequest;
+
+    console.log('📥 Request received:', { monitoring_profile_id: body.monitoring_profile_id });
 
     // Validate input
     if (!body.monitoring_profile_id) {
@@ -327,7 +352,8 @@ async function handleRequest(req: Request): Promise<Response> {
         profile.id,
         searchRun.id,
         promptTemplate.template_text,
-        profile
+        profile,
+        authHeader
       );
 
       await createSearchRunStage(
@@ -351,7 +377,7 @@ async function handleRequest(req: Request): Promise<Response> {
       // 5. Run Content Fetcher
       try {
         console.log('Running Content Fetcher...');
-        const fetcherResult = await runContentFetcher(documentIds, searchRun.id);
+        const fetcherResult = await runContentFetcher(documentIds, searchRun.id, authHeader);
 
         await createSearchRunStage(
           searchRun.id,
@@ -364,7 +390,7 @@ async function handleRequest(req: Request): Promise<Response> {
         // 6. Run Document Processor
         try {
           console.log('Running Document Processor...');
-          const processorResult = await runDocumentProcessor(documentIds, searchRun.id);
+          const processorResult = await runDocumentProcessor(documentIds, searchRun.id, authHeader);
 
           await createSearchRunStage(
             searchRun.id,

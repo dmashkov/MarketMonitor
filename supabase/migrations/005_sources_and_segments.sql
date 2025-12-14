@@ -239,8 +239,9 @@ ALTER TABLE public.prompt_segments ENABLE ROW LEVEL SECURITY;
 
 -- Segments: все могут читать, админы могут редактировать
 DROP POLICY IF EXISTS "Segments viewable by authenticated users" ON public.segments;
-CREATE POLICY "Segments viewable by authenticated users" ON public.segments
-  FOR SELECT USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Segments viewable by all" ON public.segments;
+CREATE POLICY "Segments viewable by all" ON public.segments
+  FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Segments manageable by admins" ON public.segments;
 CREATE POLICY "Segments manageable by admins" ON public.segments
@@ -253,8 +254,9 @@ CREATE POLICY "Segments manageable by admins" ON public.segments
 
 -- Geographies: все могут читать, админы могут редактировать
 DROP POLICY IF EXISTS "Geographies viewable by authenticated users" ON public.geographies;
-CREATE POLICY "Geographies viewable by authenticated users" ON public.geographies
-  FOR SELECT USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Geographies viewable by all" ON public.geographies;
+CREATE POLICY "Geographies viewable by all" ON public.geographies
+  FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Geographies manageable by admins" ON public.geographies;
 CREATE POLICY "Geographies manageable by admins" ON public.geographies

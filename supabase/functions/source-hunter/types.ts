@@ -25,9 +25,9 @@ export interface SourceHunterResponse {
 export interface SearchSource {
   id: string;
   name: string;
-  type: 'distributor' | 'manufacturer' | 'media' | 'website';
-  website: string | null;
-  telegram: string | null;
+  source_type_id: string;
+  website_url: string | null;
+  telegram_channel: string | null;
   priority: number;
 }
 

@@ -40,34 +40,40 @@ async function getSearchSources(
   try {
     let query = supabase
       .from('sources')
-      .select('id, name, type, website, telegram, priority')
+      .select('id, name, source_type_id, website_url, telegram_channel, priority')
       .eq('is_active', true);
 
-    // Если указаны сегменты, фильтруем по связи source_segments
-    if (segment_ids && segment_ids.length > 0) {
-      const { data: sourceIds } = await supabase
-        .from('source_segments')
-        .select('source_id')
-        .in('segment_id', segment_ids);
+    // NOTE: source_segments and source_geographies tables don't exist in current schema
+    // For now, ignore segment and geography filters and return all active sources
+    // TODO: Create source_segments and source_geographies tables in future migration
 
-      if (sourceIds && sourceIds.length > 0) {
-        const ids = sourceIds.map((x) => x.source_id);
-        query = query.in('id', ids);
-      }
-    }
+    // Если указаны сегменты, фильтруем по связи source_segments
+    // Currently disabled: source_segments table doesn't exist
+    // if (segment_ids && segment_ids.length > 0) {
+    //   const { data: sourceIds } = await supabase
+    //     .from('source_segments')
+    //     .select('source_id')
+    //     .in('segment_id', segment_ids);
+    //
+    //   if (sourceIds && sourceIds.length > 0) {
+    //     const ids = sourceIds.map((x) => x.source_id);
+    //     query = query.in('id', ids);
+    //   }
+    // }
 
     // Если указана география, фильтруем по связи source_geographies
-    if (geography_ids && geography_ids.length > 0) {
-      const { data: sourceIds } = await supabase
-        .from('source_geographies')
-        .select('source_id')
-        .in('geography_id', geography_ids);
-
-      if (sourceIds && sourceIds.length > 0) {
-        const ids = sourceIds.map((x) => x.source_id);
-        query = query.in('id', ids);
-      }
-    }
+    // Currently disabled: source_geographies table doesn't exist
+    // if (geography_ids && geography_ids.length > 0) {
+    //   const { data: sourceIds } = await supabase
+    //     .from('source_geographies')
+    //     .select('source_id')
+    //     .in('geography_id', geography_ids);
+    //
+    //   if (sourceIds && sourceIds.length > 0) {
+    //     const ids = sourceIds.map((x) => x.source_id);
+    //     query = query.in('id', ids);
+    //   }
+    // }
 
     const { data, error } = await query.order('priority', { ascending: false });
 
@@ -188,7 +194,7 @@ async function searchDocuments(query: string, source: SearchSource): Promise<Sea
   return [
     {
       title: `${source.name}: ${query}`,
-      url: `${source.website || 'https://example.com'}/news/${Date.now()}`,
+      url: `${source.website_url || 'https://example.com'}/news/${Date.now()}`,
       snippet: `Новость о ${query} на ${source.name}`,
     },
   ];

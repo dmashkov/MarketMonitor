@@ -4,6 +4,7 @@
 
 export { RunPipelinePanel } from './pages/RunPipelinePanel';
 export { PipelineProgress } from './components/PipelineProgress';
+export { PipelineLogs } from './components/PipelineLogs';
 export {
   usePipelineRunner,
   useMonitoringProfiles,

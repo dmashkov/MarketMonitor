@@ -14,7 +14,7 @@ import { DocumentsLibrary } from '../documents';
 import { SourcesManager } from '../sources';
 import { UsersManager } from '../users';
 import { PromptsManager } from '../prompts';
-import { RunPipelinePanel } from '../pipeline';
+import { RunPipelinePanel, PipelineLogs } from '../pipeline';
 
 /**
  * Компонент админ-панели
@@ -73,6 +73,11 @@ export const AdminPanel: React.FC = () => {
               key: 'pipeline',
               label: '🚀 Запуск Pipeline',
               children: <RunPipelinePanel />,
+            },
+            {
+              key: 'logs',
+              label: '📋 Логи Pipeline',
+              children: <PipelineLogs />,
             },
             {
               key: 'scheduler',

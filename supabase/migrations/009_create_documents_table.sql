@@ -51,6 +51,12 @@ CREATE TABLE IF NOT EXISTS documents (
   created_by UUID REFERENCES auth.users(id)
 );
 
+-- Add missing columns if they don't exist
+ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS brand_ids UUID[];
+ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS segment_ids UUID[];
+ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS geography_ids UUID[];
+ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS embedding VECTOR(1536);
+
 -- ============================================================================
 -- Индексы для производительности
 -- ============================================================================

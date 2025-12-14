@@ -1,12 +1,12 @@
 # 📊 Development Status - MarketMonitor
 
-**Дата:** 2025-12-13
-**Версия:** 0.6.0
-**Статус:** ✅ Phase 3 Complete (Admin UI 100%) + 🚀 Phase 4 Part 3 (Prompts Management Complete!)
+**Дата:** 2025-12-14
+**Версия:** 0.7.0
+**Статус:** ✅ Phase 3 Complete + ✅ Phase 4 Parts 1-3 Complete + 🏗️ Phase 4 Part 4 Architecture READY
 **AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini + text-embedding-3-small)
 **Deploy:** Netlify (Frontend)
-**Architecture:** Multi-Agent System (8 specialized agents) + Document Storage + Admin UI + Prompts Management
-**Last Major Update:** Phase 4 Part 3 Complete! Prompts Management UI fully functional (2025-12-13)
+**Architecture:** Multi-Agent Sequential Pipeline (6+ agents) + Raw→Normalized→Canonical data layers + Monitoring Profiles
+**Last Major Update:** Phase 4 Architecture Design Complete! Ready for Part 4 implementation (2025-12-14)
 
 ---
 
@@ -173,13 +173,13 @@
 
 ---
 
-## 🚀 Phase 4: AI Agents Implementation (IN PROGRESS)
+## 🚀 Phase 4: Multi-Agent Sequential Pipeline (IN PROGRESS)
 
 **Дата начала:** 2025-12-13
-**Статус:** 25% (Source Hunter + Content Fetcher + Prompts Management complete)
-**Last Update:** 2025-12-13 - Prompts Management UI complete with 5 default prompts seeded
+**Статус:** ✅ ARCHITECTURE DESIGN COMPLETE + ✅ PART 4 COMPLETE (35% implementation)
+**Last Update:** 2025-12-14 - Completed Part 4: Document Processor, Search Orchestrator, Admin Pipeline UI
 
-### ✅ Завершено (Phase 4 - Part 1-3):
+### ✅ Завершено (Phase 4 - Part 1-4):
 
 #### 1. **Documents Library Improvements** ✅
 - ✅ Download button functionality (signed URLs for private bucket)
@@ -213,85 +213,172 @@
 - ✅ README.md, POSTMAN_COLLECTION.json, test script
 - **Testing:** 19 tests - ALL PASS ✅ (100% success rate)
 
-#### 4. **Prompts Management UI** ✅ (NEW!)
+#### 4. **Prompts Management UI** ✅
 - ✅ Folder: `frontend/src/modules/admin/prompts/`
 - ✅ PromptsManager - CRUD таблица с фильтрами
 - ✅ PromptFormModal - форма создания/редактирования промптов
 - ✅ usePrompts - React Query hooks (GET list, GET single, POST, PATCH, DELETE)
 - ✅ prompts-api Edge Function (GET, POST, PATCH, DELETE с RLS)
 - ✅ Integration into AdminPanel (новая вкладка "📝 Промпты")
-- ✅ Filter by: search text, search type, active status
-- ✅ Segment и geography specialization support
-- ✅ TypeScript strict mode, full type safety
-- ✅ Seeded 5 default AI prompts:
-  - Daily Market Actions (all segments)
-  - Daily Price Changes (RAC segment)
-  - Weekly Industry Partnerships
-  - Weekly Regulatory Updates
-  - Monthly Market Trends Analysis
-  - Monthly Competitive Intelligence
-- ✅ Migration 016 with proper RLS policies
-- **Status:** ✅ Ready for testing + ready for agents to consume
+- ✅ Seeded 6 default AI prompts
+- **Status:** ✅ Fully functional
 
-### Что нужно сделать (Phase 4 - Part 4-8):
+#### 5. **Architecture Design Complete** ✅
+- ✅ **PHASE_4_ARCHITECTURE.md** - Полная архитектура pipeline с 10 ключевыми решениями
+- ✅ **DATABASE_SCHEMA.md** - Полная схема БД (12 таблиц, RLS, индексы, triggers)
+- ✅ **AGENT_SPECS.md** - Спецификация 6 агентов (Source Hunter → Event Extractor)
+- ✅ **PHASE_4_ROADMAP.md** - План реализации Parts 4-7 (~31-42 часа)
+- ✅ Все документы в `/docs/` папке
 
-#### 5. **Document Processor Agent** (NEXT - Part 4)
-- [ ] Создать `supabase/functions/agents/document-processor/index.ts`
-- [ ] Text extraction (HTML, PDF, DOCX, PPTX парсинг)
-- [ ] Mentions extraction (brands, segments, geographies) через OpenAI
-- [ ] Embedding generation (OpenAI text-embedding-3-small, 1536 dims)
-- [ ] Supabase Storage integration
-- [ ] Database update с embeddings для pgvector
-- [ ] Сохранение в documents table
+#### 6. **Phase 4 Part 4: Document Processor + Search Orchestrator + Admin UI** ✅ (NEW!)
 
-#### 6. **Event Extractor Agent** (Edge Function)
-- [ ] Создать `supabase/functions/agents/event-extractor/index.ts`
-- [ ] Извлечение событий из текста через OpenAI
-- [ ] Chunking для длинных документов
-- [ ] Парсинг JSON ответов
-- [ ] Сохранение в events таблицу
+**Database Migrations:**
+- ✅ **Migration 017** - Complete Phase 4 pipeline schema
+  - event_types table (9 predefined types)
+  - Linking tables: document_brands, document_segments, document_geographies, document_event_types
+  - search_runs_stages, search_runs_prompts for comprehensive tracking
+  - monitoring_profiles table for configuration
+  - prompt_templates table for prompt management
+  - Updates to documents and events tables
+  - Full RLS policies on all tables
+  - Indexes for performance optimization
 
-#### 7. **Criticality Scorer Agent** (Edge Function)
-- [ ] Создать `supabase/functions/agents/criticality-scorer/index.ts`
-- [ ] Batch processing (10 событий)
-- [ ] Скоринг по шкале 1-5
-- [ ] Reasoning + factors
-- [ ] Обновление events таблицы
+- ✅ **Migration 018** - Initial Phase 4 data
+  - 9 event types seeded
+  - 3 prompt templates (classification, extraction, scoring)
+  - 1 MVP test monitoring profile
 
-#### 8. **Duplicate Detector Agent** (Edge Function)
-- [ ] Создать `supabase/functions/agents/duplicate-detector/index.ts`
-- [ ] Cosine similarity через embeddings
-- [ ] Merge logic
-- [ ] Threshold: similarity > 0.85
+**Backend - Edge Functions (Part 4):**
+- ✅ **Document Processor Agent** (`/agents/document-processor/`)
+  - Classifies documents using GPT-4o (segment, event_types, brands, geographies)
+  - Generates embeddings via text-embedding-3-small (1536 dimensions)
+  - Creates linking table entries for many-to-many relationships
+  - Canonicalizes content text for normalized layer
+  - Full per-document error tracking
+  - Types: DocumentProcessorRequest/Response
 
-#### 9. **Alert Manager Agent** (Edge Function)
-- [ ] Создать `supabase/functions/agents/alert-manager/index.ts`
-- [ ] Telegram bot setup
-- [ ] Email notifications
-- [ ] In-app alerts
+- ✅ **Search Orchestrator** (`/agents/search-orchestrator/`)
+  - Orchestrates sequential pipeline: Source Hunter → Content Fetcher → Document Processor
+  - Creates search_run records with full audit trail
+  - Records each stage in search_runs_stages
+  - Comprehensive error handling with stage-level rollback
+  - Returns progress and final results
+  - Types: SearchOrchestratorRequest/Response, SearchRun, SearchRunStage
 
-#### 10. **Orchestrator** (Edge Function)
-- [ ] Создать `supabase/functions/agents/orchestrator/index.ts`
-- [ ] Запуск полного pipeline
-- [ ] Интеграция с search_runs
-- [ ] Error handling и retry logic
+**Frontend - React Pipeline Module (Part 4):**
+- ✅ **Admin Pipeline Module** (`/modules/admin/pipeline/`)
+  - **RunPipelinePanel** - Main UI for pipeline execution
+    - Select monitoring profile dropdown
+    - Start/stop pipeline controls
+    - Real-time progress visualization
+    - Results summary with statistics
+    - Execution history table
 
-#### 11. **Report Generator** (Edge Function)
-- [ ] Создать `supabase/functions/agents/report-generator/index.ts`
-- [ ] Daily/Weekly/Monthly reports
-- [ ] Export в PDF/DOCX
-- [ ] Сохранение в reports таблицу
+  - **PipelineProgress** - Stage-by-stage progress display
+    - Timeline visualization of pipeline stages
+    - Per-stage status (success/failed)
+    - Document counts and error messages
+    - Real-time progress bar
 
-#### 12. **Custom Prompt Runner** (Edge Function)
-- [ ] Создать `supabase/functions/agents/custom-prompt-runner/index.ts`
-- [ ] Запуск кастомных промптов
-- [ ] Определение: новый поиск или использование БД
+  - **usePipelineRunner Hook** - React Query for pipeline API
+    - Start pipeline execution
+    - Fetch monitoring profiles
+    - Get search run history
+    - Track search run stages
 
-### Frontend (Phase 4 UI)
-- [ ] Custom Prompt Builder (3-step wizard)
-- [ ] Events display с source tracking
-- [ ] Criticality badges и filtering
-- [ ] Reports viewer
+- ✅ **AdminPanel Update**
+  - Added "🚀 Запуск Pipeline" tab
+  - Integrated with existing admin UI
+  - Type-safe components (NO any!)
+
+**Key Features Implemented:**
+✅ Raw → Normalized → Canonical data transformation in one table
+✅ One LLM call per document (cost-efficient)
+✅ Flexible 0-N events per document mapping
+✅ Soft delete for duplicates with is_duplicate flag
+✅ Sequential agent execution for MVP
+✅ Monitoring profiles for admin configuration
+✅ Comprehensive progress tracking
+✅ Per-stage error logging
+✅ Type-safe throughout (TypeScript strict mode)
+
+**Statistics - Part 4:**
+- 2 Database migrations
+- 2 Edge Functions (Document Processor + Search Orchestrator)
+- 1 Admin module with 2 components + 1 hook
+- 1 Updated AdminPanel component
+- ~1500 lines of backend code
+- ~600 lines of frontend code
+- Full TypeScript types throughout
+
+**Testing Status:**
+- ✅ All functions have proper error handling
+- ✅ Validation at API boundaries
+- ✅ Progress tracking for debugging
+- ✅ History logging for audit trail
+- Ready for integration testing with real pipeline execution
+
+### 📋 Что нужно сделать (Phase 4 - Part 5-7, Part 8+ Phase 5):
+
+#### Part 5: **Dedup + Criticality Scorer** (~5-7 часов)
+- [ ] **Dedup Agent** - Duplicate detection via cosine similarity
+  - [ ] Create `supabase/functions/agents/dedup/index.ts`
+  - [ ] Implement pgvector cosine similarity (`<=>` operator)
+  - [ ] Batch processing (50 documents at a time)
+  - [ ] Mark is_duplicate = TRUE if similarity > threshold
+  - [ ] Cost: ~$0, Duration: ~10-20 seconds
+
+- [ ] **Criticality Scorer Agent** - Importance scoring
+  - [ ] Create `supabase/functions/agents/criticality-scorer/index.ts`
+  - [ ] Batch processing (10 documents per LLM call)
+  - [ ] Score documents 1-5 based on context
+  - [ ] LLM prompt for scoring logic
+  - [ ] Cost: ~$0.50 per run
+
+#### Part 6: **Event Extractor + Integration** (~6-9 часов)
+- [ ] **Event Extractor Agent**
+  - [ ] Create `supabase/functions/agents/event-extractor/index.ts`
+  - [ ] Extract 0-N events per document via GPT-4o
+  - [ ] Support multiple events per document
+  - [ ] Link events to documents (events.document_id)
+  - [ ] Set events.source_type = 'source_hunter'
+  - [ ] Cost: ~$0.50 per run
+
+- [ ] **End-to-End Pipeline Testing**
+  - [ ] Create test monitoring profile
+  - [ ] Run full pipeline with 5-10 documents
+  - [ ] Verify data flow (raw → normalized → canonical)
+  - [ ] Check all linking tables populated correctly
+  - [ ] Verify events created with proper structure
+  - [ ] Performance testing (measure duration)
+  - [ ] Cost calculation (measure API calls)
+
+#### Part 7: **Monitoring Profiles + Prompt Templates UI** (~8-10 часов)
+- [ ] **Monitoring Profiles Management UI**
+  - [ ] Create `frontend/src/modules/admin/monitoring-profiles/` module
+  - [ ] CRUD table with filters
+  - [ ] Form modal for create/edit
+  - [ ] Multi-select for scope configuration
+  - [ ] React Query hooks
+
+- [ ] **Prompt Templates Management UI**
+  - [ ] Create `frontend/src/modules/admin/prompt-templates/` module
+  - [ ] CRUD table with filters
+  - [ ] Template editor with placeholder visualization
+  - [ ] React Query hooks
+
+#### Part 8: **Documentation + Phase 5 Planning**
+- [ ] Update DEVELOPMENT_STATUS.md
+- [ ] Update PHASE_4_ARCHITECTURE.md with actual results
+- [ ] Create operation guide for admins
+- [ ] Plan Phase 5: Scheduling, Parallel Execution, Alert Manager
+
+#### 🔮 Phase 5: Advanced Features (TBD)
+- CRON scheduling for monitoring_profiles
+- Parallel execution of agents
+- Alert Manager Agent (Telegram/Email)
+- Report Generator Agent
+- Scheduler UI
 
 ---
 

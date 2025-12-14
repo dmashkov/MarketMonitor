@@ -316,8 +316,15 @@ CREATE POLICY "Monitoring profiles manageable by admins"
 -- ============================================================================
 
 ALTER TABLE IF EXISTS public.search_runs ADD COLUMN IF NOT EXISTS monitoring_profile_id UUID REFERENCES public.monitoring_profiles(id) ON DELETE SET NULL;
+ALTER TABLE IF EXISTS public.search_runs ADD COLUMN IF NOT EXISTS created_by UUID;
+ALTER TABLE IF EXISTS public.search_runs ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'orchestrator';
+ALTER TABLE IF EXISTS public.search_runs ADD COLUMN IF NOT EXISTS documents_created INT DEFAULT 0;
+ALTER TABLE IF EXISTS public.search_runs ADD COLUMN IF NOT EXISTS events_created INT DEFAULT 0;
+ALTER TABLE IF EXISTS public.search_runs ADD COLUMN IF NOT EXISTS execution_time_ms INT;
 
 CREATE INDEX IF NOT EXISTS idx_search_runs_profile ON public.search_runs(monitoring_profile_id);
+CREATE INDEX IF NOT EXISTS idx_search_runs_created_by ON public.search_runs(created_by);
+CREATE INDEX IF NOT EXISTS idx_search_runs_type ON public.search_runs(type);
 
 -- ============================================================================
 -- 10. SEARCH_RUNS_STAGES TABLE (NEW)

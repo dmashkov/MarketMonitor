@@ -26,10 +26,10 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 );
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
-CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
-CREATE INDEX IF NOT EXISTS idx_user_profiles_is_active ON user_profiles(is_active);
-CREATE INDEX IF NOT EXISTS idx_user_profiles_created_at ON user_profiles(created_at DESC);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_user_profiles_is_active ON user_profiles(is_active);
+CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_user_profiles_created_at ON user_profiles(created_at DESC);
 
 -- ============================================================================
 -- TRIGGER: Automatic Profile Creation on Auth Signup

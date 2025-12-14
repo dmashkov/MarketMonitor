@@ -63,6 +63,15 @@ export interface MonitoringProfile {
   schedule_cron: string | null;
 }
 
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  stage: 'search' | 'classify' | 'extract' | 'score';
+  template_text: string;
+  is_active: boolean;
+  description: string | null;
+}
+
 export interface AgentResponse {
   status: 'success' | 'partial' | 'error';
   [key: string]: unknown;

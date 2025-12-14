@@ -9,6 +9,8 @@ export interface SourceHunterRequest {
   segment_ids?: string[];
   geography_ids?: string[];
   date_range_days?: number;
+  monitoring_profile_id?: string;
+  search_run_id?: string;
 }
 
 export interface SourceHunterResponse {

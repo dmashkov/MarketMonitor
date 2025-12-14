@@ -173,7 +173,7 @@ async function runSourceHunter(
   prompt: string,
   profile: MonitoringProfile
 ): Promise<SourceHunterResponse> {
-  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/agents/source-hunter`;
+  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/source-hunter`;
 
   const response = await fetch(functionUrl, {
     method: 'POST',
@@ -206,7 +206,7 @@ async function runContentFetcher(
   documentIds: string[],
   searchRunId: string
 ): Promise<ContentFetcherResponse> {
-  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/agents/content-fetcher`;
+  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/content-fetcher`;
 
   const response = await fetch(functionUrl, {
     method: 'POST',
@@ -236,7 +236,7 @@ async function runDocumentProcessor(
   documentIds: string[],
   searchRunId: string
 ): Promise<DocumentProcessorResponse> {
-  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/agents/document-processor`;
+  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/document-processor`;
 
   const response = await fetch(functionUrl, {
     method: 'POST',

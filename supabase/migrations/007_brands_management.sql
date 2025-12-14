@@ -89,11 +89,13 @@ ALTER TABLE brands ENABLE ROW LEVEL SECURITY;
 ALTER TABLE brand_segments ENABLE ROW LEVEL SECURITY;
 
 -- brands: все могут читать, только админы могут модифицировать
+DROP POLICY IF EXISTS "Users can view brands" ON brands;
 CREATE POLICY "Users can view brands"
   ON brands FOR SELECT
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "Only admins can manage brands" ON brands;
 CREATE POLICY "Only admins can manage brands"
   ON brands FOR ALL
   TO authenticated
@@ -106,11 +108,13 @@ CREATE POLICY "Only admins can manage brands"
   );
 
 -- brand_segments: все могут читать, только админы могут модифицировать
+DROP POLICY IF EXISTS "Users can view brand segments" ON brand_segments;
 CREATE POLICY "Users can view brand segments"
   ON brand_segments FOR SELECT
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "Only admins can manage brand segments" ON brand_segments;
 CREATE POLICY "Only admins can manage brand segments"
   ON brand_segments FOR ALL
   TO authenticated
@@ -131,7 +135,8 @@ INSERT INTO brands (name, manufacturer, country, category, website_url, descript
   ('Daikin', 'Daikin Industries', 'Япония', 'premium', 'https://www.daikin.ru', 'Японский премиум бренд, лидер в VRF и промышленных системах', true),
   ('Mitsubishi Electric', 'Mitsubishi Electric', 'Япония', 'premium', 'https://www.mitsubishi-electric.ru', 'Японский бренд премиум класса', true),
   ('Fujitsu General', 'Fujitsu General', 'Япония', 'premium', 'https://www.fujitsu-general.ru', 'Японский производитель климатической техники', true),
-  ('Panasonic', 'Panasonic Corporation', 'Япония', 'premium', 'https://www.panasonic.com/ru', 'Японский бренд с широкой линейкой', true);
+  ('Panasonic', 'Panasonic Corporation', 'Япония', 'premium', 'https://www.panasonic.com/ru', 'Японский бренд с широкой линейкой', true)
+ON CONFLICT (name) DO NOTHING;
 
 -- Middle бренды (китайские лидеры)
 INSERT INTO brands (name, manufacturer, country, category, website_url, description, is_active) VALUES
@@ -139,13 +144,15 @@ INSERT INTO brands (name, manufacturer, country, category, website_url, descript
   ('Gree', 'Gree Electric', 'Китай', 'middle', 'https://www.gree.ru', 'Китайский бренд, один из лидеров по объему производства', true),
   ('Haier', 'Haier Group', 'Китай', 'middle', 'https://www.haier.ru', 'Крупный китайский производитель бытовой техники', true),
   ('TCL', 'TCL Corporation', 'Китай', 'middle', 'https://www.tcl.com', 'Китайский бренд с широкой линейкой', true),
-  ('Hisense', 'Hisense Group', 'Китай', 'middle', 'https://www.hisense.ru', 'Китайский производитель бытовой техники', true);
+  ('Hisense', 'Hisense Group', 'Китай', 'middle', 'https://www.hisense.ru', 'Китайский производитель бытовой техники', true)
+ON CONFLICT (name) DO NOTHING;
 
 -- Budget бренды (локальные и бюджетные)
 INSERT INTO brands (name, manufacturer, country, category, website_url, description, is_active) VALUES
   ('Ballu', 'Ballu Industrial Group', 'Россия/Китай', 'budget', 'https://www.ballu.ru', 'Популярный бюджетный бренд на российском рынке', true),
   ('Electrolux', 'Electrolux AB', 'Швеция', 'middle', 'https://www.electrolux.ru', 'Шведский производитель бытовой техники', true),
-  ('Zanussi', 'Electrolux AB', 'Италия', 'budget', 'https://www.zanussi.ru', 'Итальянский бюджетный бренд (принадлежит Electrolux)', true);
+  ('Zanussi', 'Electrolux AB', 'Италия', 'budget', 'https://www.zanussi.ru', 'Итальянский бюджетный бренд (принадлежит Electrolux)', true)
+ON CONFLICT (name) DO NOTHING;
 
 -- ============================================================
 -- SEED DATA: Связи брендов и сегментов
@@ -160,7 +167,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Daikin'),
   id
 FROM segments
-WHERE name IN ('RAC', 'VRF', 'Chiller', 'AHU', 'Industrial', 'Heat Pumps', 'Ventilation');
+WHERE name IN ('RAC', 'VRF', 'Chiller', 'AHU', 'Industrial', 'Heat Pumps', 'Ventilation')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Mitsubishi Electric (premium) - RAC, VRF, Industrial
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -168,7 +176,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Mitsubishi Electric'),
   id
 FROM segments
-WHERE name IN ('RAC', 'VRF', 'Industrial', 'Heat Pumps');
+WHERE name IN ('RAC', 'VRF', 'Industrial', 'Heat Pumps')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Fujitsu General (premium) - RAC, VRF
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -176,7 +185,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Fujitsu General'),
   id
 FROM segments
-WHERE name IN ('RAC', 'VRF');
+WHERE name IN ('RAC', 'VRF')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Panasonic (premium) - RAC, VRF, Heat Pumps
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -184,7 +194,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Panasonic'),
   id
 FROM segments
-WHERE name IN ('RAC', 'VRF', 'Heat Pumps');
+WHERE name IN ('RAC', 'VRF', 'Heat Pumps')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Midea (middle) - RAC, VRF, Chiller, AHU, Industrial
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -192,7 +203,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Midea'),
   id
 FROM segments
-WHERE name IN ('RAC', 'VRF', 'Chiller', 'AHU', 'Industrial');
+WHERE name IN ('RAC', 'VRF', 'Chiller', 'AHU', 'Industrial')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Gree (middle) - RAC, VRF, Chiller
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -200,7 +212,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Gree'),
   id
 FROM segments
-WHERE name IN ('RAC', 'VRF', 'Chiller');
+WHERE name IN ('RAC', 'VRF', 'Chiller')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Haier (middle) - RAC, VRF, Chiller, Refrigeration
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -208,7 +221,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Haier'),
   id
 FROM segments
-WHERE name IN ('RAC', 'VRF', 'Chiller', 'Refrigeration');
+WHERE name IN ('RAC', 'VRF', 'Chiller', 'Refrigeration')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- TCL (middle) - RAC
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -216,7 +230,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'TCL'),
   id
 FROM segments
-WHERE name IN ('RAC');
+WHERE name IN ('RAC')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Hisense (middle) - RAC, VRF
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -224,7 +239,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Hisense'),
   id
 FROM segments
-WHERE name IN ('RAC', 'VRF');
+WHERE name IN ('RAC', 'VRF')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Ballu (budget) - RAC, Ventilation, Heat Pumps
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -232,7 +248,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Ballu'),
   id
 FROM segments
-WHERE name IN ('RAC', 'Ventilation', 'Heat Pumps');
+WHERE name IN ('RAC', 'Ventilation', 'Heat Pumps')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Electrolux (middle) - RAC, Heat Pumps, Refrigeration
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -240,7 +257,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Electrolux'),
   id
 FROM segments
-WHERE name IN ('RAC', 'Heat Pumps', 'Refrigeration');
+WHERE name IN ('RAC', 'Heat Pumps', 'Refrigeration')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- Zanussi (budget) - RAC, Refrigeration
 INSERT INTO brand_segments (brand_id, segment_id)
@@ -248,7 +266,8 @@ SELECT
   (SELECT id FROM brands WHERE name = 'Zanussi'),
   id
 FROM segments
-WHERE name IN ('RAC', 'Refrigeration');
+WHERE name IN ('RAC', 'Refrigeration')
+ON CONFLICT (brand_id, segment_id) DO NOTHING;
 
 -- ============================================================
 -- ФУНКЦИИ ДЛЯ РАБОТЫ С БРЕНДАМИ

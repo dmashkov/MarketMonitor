@@ -14,6 +14,7 @@ export interface SourceHunterRequest {
 export interface SourceHunterResponse {
   status: 'success' | 'error';
   documents_created: number;
+  document_ids?: string[];
   urls: string[];
   error?: string;
   message?: string;

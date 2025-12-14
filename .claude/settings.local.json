@@ -23,7 +23,8 @@
       "Bash(while read f)",
       "Bash(do grep -q \"DROP TRIGGER IF EXISTS\" \"$f\")",
       "Bash(echo:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

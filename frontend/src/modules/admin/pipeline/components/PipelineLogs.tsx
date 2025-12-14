@@ -294,14 +294,35 @@ export const PipelineLogs: React.FC = () => {
                   {stage.stage_name.toUpperCase()}
                 </div>
                 <div style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
-                  <div>
+                  {/* Timing */}
+                  <div style={{ marginBottom: '4px' }}>
                     ⏱️ {new Date(stage.started_at).toLocaleTimeString('ru-RU')}
                     {stage.completed_at &&
                       ` - ${new Date(stage.completed_at).toLocaleTimeString('ru-RU')}`}
                   </div>
-                  <div>📦 Обработано документов: {stage.documents_processed}</div>
+
+                  {/* Duration */}
+                  {stage.started_at && stage.completed_at && (
+                    <div style={{ marginBottom: '4px', fontStyle: 'italic' }}>
+                      ⏳ Длительность: {((new Date(stage.completed_at).getTime() - new Date(stage.started_at).getTime()) / 1000).toFixed(1)}s
+                    </div>
+                  )}
+
+                  {/* Results */}
+                  {stage.documents_processed > 0 && (
+                    <div style={{ marginBottom: '4px', fontWeight: 500 }}>
+                      ✅ {stage.stage_name === 'source_hunter' && `Найдено ${stage.documents_processed} источников/документов`}
+                      {stage.stage_name === 'content_fetcher' && `Загружено контента для ${stage.documents_processed} документов`}
+                      {stage.stage_name === 'document_processor' && `Обработано и классифицировано ${stage.documents_processed} документов`}
+                      {stage.stage_name === 'dedup' && `Уникальных документов: ${stage.documents_processed}`}
+                      {stage.stage_name === 'criticality_scorer' && `Оценено ${stage.documents_processed} документов`}
+                      {stage.stage_name === 'event_extractor' && `Извлечено событий: ${stage.documents_processed}`}
+                    </div>
+                  )}
+
+                  {/* Error */}
                   {stage.error_message && (
-                    <div style={{ color: '#ff4d4f', marginTop: '4px' }}>
+                    <div style={{ color: '#ff4d4f', marginTop: '4px', padding: '4px', backgroundColor: '#fff2f0', borderRadius: '2px' }}>
                       ❌ Ошибка: {stage.error_message}
                     </div>
                   )}

@@ -31,7 +31,7 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { supabase } from '../../../../../lib/supabase';
+import { supabase } from '../../../../lib/supabase';
 
 interface SearchRun {
   id: string;

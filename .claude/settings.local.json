@@ -24,7 +24,8 @@
       "Bash(do grep -q \"DROP TRIGGER IF EXISTS\" \"$f\")",
       "Bash(echo:*)",
       "Bash(done)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(\"https://aggiamgeplckdrnbqmob.supabase.co/rest/v1/monitoring_profiles?limit=1\" )"
     ],
     "deny": [],
     "ask": []

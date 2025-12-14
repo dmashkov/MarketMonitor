@@ -56,6 +56,7 @@ ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS brand_ids UUID[];
 ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS segment_ids UUID[];
 ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS geography_ids UUID[];
 ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS embedding VECTOR(1536);
+ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS content_html TEXT;
 
 -- ============================================================================
 -- Индексы для производительности

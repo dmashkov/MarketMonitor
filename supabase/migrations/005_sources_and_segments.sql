@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS public.segments (
   name VARCHAR(100) NOT NULL UNIQUE,
   code VARCHAR(50) NOT NULL UNIQUE,
   description TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.geographies (
   code VARCHAR(50) NOT NULL UNIQUE,
   type VARCHAR(50) NOT NULL, -- 'country', 'region', 'city'
   parent_id UUID REFERENCES public.geographies(id) ON DELETE SET NULL,
+  is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

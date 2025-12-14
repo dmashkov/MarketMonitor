@@ -101,12 +101,14 @@ CREATE TRIGGER update_documents_updated_at
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 
 -- Policy 1: Все authenticated users могут читать документы
+DROP POLICY IF EXISTS "Authenticated users can view documents" ON documents;
 CREATE POLICY "Authenticated users can view documents"
   ON documents FOR SELECT
   TO authenticated
   USING (true);
 
 -- Policy 2: Admins могут делать всё
+DROP POLICY IF EXISTS "Admins have full access to documents" ON documents;
 CREATE POLICY "Admins have full access to documents"
   ON documents FOR ALL
   TO authenticated
@@ -119,18 +121,21 @@ CREATE POLICY "Admins have full access to documents"
   );
 
 -- Policy 3: Users могут создавать свои документы
+DROP POLICY IF EXISTS "Users can create own documents" ON documents;
 CREATE POLICY "Users can create own documents"
   ON documents FOR INSERT
   TO authenticated
   WITH CHECK (created_by = auth.uid());
 
 -- Policy 4: Users могут обновлять свои документы
+DROP POLICY IF EXISTS "Users can update own documents" ON documents;
 CREATE POLICY "Users can update own documents"
   ON documents FOR UPDATE
   TO authenticated
   USING (created_by = auth.uid());
 
 -- Policy 5: Users могут удалять свои документы
+DROP POLICY IF EXISTS "Users can delete own documents" ON documents;
 CREATE POLICY "Users can delete own documents"
   ON documents FOR DELETE
   TO authenticated

@@ -66,6 +66,7 @@ export const RunPipelinePanel: React.FC = () => {
       return;
     }
 
+    console.log('🚀 Starting pipeline with profile:', selectedProfile);
     setIsRunning(true);
     setLastResult(null);
 

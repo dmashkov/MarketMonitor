@@ -137,12 +137,21 @@ ON CONFLICT DO NOTHING;
 -- 3. SEED MONITORING_PROFILES
 -- ============================================================================
 
--- Get the classification template ID
+-- Get the classification template ID and array data
 WITH template_id AS (
   SELECT id FROM public.prompt_templates
   WHERE name = 'Document Classification'
   AND stage = 'classify'
   LIMIT 1
+),
+segment_data AS (
+  SELECT ARRAY_AGG(id) as segment_ids FROM public.segments WHERE is_active = true LIMIT 8
+),
+geography_data AS (
+  SELECT ARRAY_AGG(id) as geography_ids FROM public.geographies WHERE is_active = true LIMIT 10
+),
+event_type_data AS (
+  SELECT ARRAY_AGG(id) as event_type_ids FROM public.event_types WHERE is_active = true LIMIT 9
 )
 INSERT INTO public.monitoring_profiles (
   name,
@@ -161,14 +170,15 @@ SELECT
   'MVP Test Profile - All Segments',
   'Initial test profile monitoring all segments and event types in Russia',
   true,
-  ARRAY(SELECT id FROM public.segments WHERE is_active = true LIMIT 8),
+  COALESCE(segment_data.segment_ids, ARRAY[]::UUID[]),
   ARRAY[]::UUID[],
-  ARRAY(SELECT id FROM public.geographies WHERE is_active = true LIMIT 10),
-  ARRAY(SELECT id FROM public.event_types WHERE is_active = true LIMIT 9),
+  COALESCE(geography_data.geography_ids, ARRAY[]::UUID[]),
+  COALESCE(event_type_data.event_type_ids, ARRAY[]::UUID[]),
   5,
   20,
   0.85,
   (SELECT id FROM template_id LIMIT 1)
+FROM segment_data, geography_data, event_type_data
 WHERE NOT EXISTS (
   SELECT 1 FROM public.monitoring_profiles
   WHERE name = 'MVP Test Profile - All Segments'

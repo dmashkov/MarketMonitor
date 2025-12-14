@@ -38,9 +38,18 @@ WHERE d.embedding IS NOT NULL
 ORDER BY d.embedding <=> doc.embedding
 LIMIT 10;
 
--- Теперь попробуем функцию с тем же embedding
-SELECT * FROM search_documents_by_embedding(
-  (SELECT embedding FROM documents WHERE embedding IS NOT NULL LIMIT 1),
-  0.5,
-  10
-);
+-- Теперь попробуем функцию с тем же embedding (only if documents table is not empty)
+-- Avoid running if no documents exist
+DO $$
+DECLARE
+  doc_count INT;
+BEGIN
+  SELECT COUNT(*) INTO doc_count FROM documents WHERE embedding IS NOT NULL LIMIT 1;
+  IF doc_count > 0 THEN
+    EXECUTE 'SELECT * FROM search_documents_by_embedding(
+      (SELECT embedding FROM documents WHERE embedding IS NOT NULL LIMIT 1),
+      0.5,
+      10
+    )';
+  END IF;
+END $$;

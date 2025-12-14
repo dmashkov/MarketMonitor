@@ -302,7 +302,12 @@ export const PipelineLogs: React.FC = () => {
             children: (
               <div>
                 <div style={{ fontWeight: 600 }}>
-                  {stage.stage_name.toUpperCase()}
+                  {stage.stage_name === 'source_hunter' && '🔍 Source Hunter'}
+                  {stage.stage_name === 'content_fetcher' && '📥 Content Fetcher'}
+                  {stage.stage_name === 'document_processor' && '⚙️ Document Processor'}
+                  {stage.stage_name === 'dedup' && '🔄 Deduplication'}
+                  {stage.stage_name === 'criticality_scorer' && '⭐ Criticality Scorer'}
+                  {stage.stage_name === 'event_extractor' && '📊 Event Extractor'}
                 </div>
                 <div style={{ color: '#666', fontSize: '12px', marginTop: '4px' }}>
                   {/* Timing */}

@@ -137,25 +137,6 @@ ON CONFLICT DO NOTHING;
 -- 3. SEED MONITORING_PROFILES
 -- ============================================================================
 
--- Get the classification template ID and array data
-WITH template_id AS (
-  SELECT id FROM public.prompt_templates
-  WHERE name = 'Document Classification'
-  AND stage = 'classify'
-  LIMIT 1
-),
-segment_data AS (
-  SELECT ARRAY_AGG(id) as segment_ids
-  FROM (SELECT id FROM public.segments WHERE is_active = true LIMIT 8) as segments_subset
-),
-geography_data AS (
-  SELECT ARRAY_AGG(id) as geography_ids
-  FROM (SELECT id FROM public.geographies WHERE is_active = true LIMIT 10) as geographies_subset
-),
-event_type_data AS (
-  SELECT ARRAY_AGG(id) as event_type_ids
-  FROM (SELECT id FROM public.event_types WHERE is_active = true LIMIT 9) as event_types_subset
-)
 INSERT INTO public.monitoring_profiles (
   name,
   description,
@@ -173,20 +154,18 @@ SELECT
   'MVP Test Profile - All Segments',
   'Initial test profile monitoring all segments and event types in Russia',
   true,
-  COALESCE(segment_data.segment_ids, ARRAY[]::UUID[]),
+  (SELECT ARRAY_AGG(id) FROM public.segments WHERE is_active = true),
   ARRAY[]::UUID[],
-  COALESCE(geography_data.geography_ids, ARRAY[]::UUID[]),
-  COALESCE(event_type_data.event_type_ids, ARRAY[]::UUID[]),
+  (SELECT ARRAY_AGG(id) FROM public.geographies WHERE is_active = true),
+  (SELECT ARRAY_AGG(id) FROM public.event_types WHERE is_active = true),
   5,
   20,
   0.85,
-  (SELECT id FROM template_id LIMIT 1)
-FROM segment_data, geography_data, event_type_data
+  (SELECT id FROM public.prompt_templates WHERE name = 'Document Classification' AND stage = 'classify' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM public.monitoring_profiles
   WHERE name = 'MVP Test Profile - All Segments'
-)
-;
+);
 
 -- ============================================================================
 -- MIGRATION COMPLETE

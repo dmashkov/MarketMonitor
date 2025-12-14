@@ -144,22 +144,22 @@ COMMENT ON TABLE public.prompt_segments IS 'Связь промптов с не�
 -- 9. INDEXES для производительности
 -- =====================================================
 
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_sources_type ON public.sources(source_type_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_sources_active ON public.sources(is_active);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_sources_frequency ON public.sources(check_frequency);
+CREATE INDEX IF NOT EXISTS idx_sources_type ON public.sources(source_type_id);
+CREATE INDEX IF NOT EXISTS idx_sources_active ON public.sources(is_active);
+CREATE INDEX IF NOT EXISTS idx_sources_frequency ON public.sources(check_frequency);
 
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_source_urls_source ON public.source_urls(source_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_source_urls_active ON public.source_urls(is_active);
+CREATE INDEX IF NOT EXISTS idx_source_urls_source ON public.source_urls(source_id);
+CREATE INDEX IF NOT EXISTS idx_source_urls_active ON public.source_urls(is_active);
 
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_source ON public.events(source_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_criticality ON public.events(criticality_level);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_segment ON public.events(segment_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_geography ON public.events(geography_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_events_detected_at ON public.events(detected_at);
+CREATE INDEX IF NOT EXISTS idx_events_source ON public.events(source_id);
+CREATE INDEX IF NOT EXISTS idx_events_criticality ON public.events(criticality_level);
+CREATE INDEX IF NOT EXISTS idx_events_segment ON public.events(segment_id);
+CREATE INDEX IF NOT EXISTS idx_events_geography ON public.events(geography_id);
+CREATE INDEX IF NOT EXISTS idx_events_detected_at ON public.events(detected_at);
 
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_prompts_segment ON public.ai_prompts(segment_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_prompts_geography ON public.ai_prompts(geography_id);
-CREATE INDEX IF NOT EXISTS IF NOT EXISTS idx_prompts_depth ON public.ai_prompts(search_depth);
+CREATE INDEX IF NOT EXISTS idx_prompts_segment ON public.ai_prompts(segment_id);
+CREATE INDEX IF NOT EXISTS idx_prompts_geography ON public.ai_prompts(geography_id);
+CREATE INDEX IF NOT EXISTS idx_prompts_depth ON public.ai_prompts(search_depth);
 
 -- =====================================================
 -- 10. UPDATE TRIGGERS

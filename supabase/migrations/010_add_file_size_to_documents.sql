@@ -4,7 +4,7 @@
 -- Добавляем поле file_size для хранения размера файла в байтах
 -- ============================================================================
 
-ALTER TABLE documents ADD COLUMN file_size BIGINT;
+ALTER TABLE IF EXISTS documents ADD COLUMN IF NOT EXISTS file_size BIGINT;
 
 -- Комментарий
 COMMENT ON COLUMN documents.file_size IS 'Размер файла в байтах';

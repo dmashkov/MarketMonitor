@@ -29,12 +29,14 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 
 -- Policy 1: Authenticated users могут ЧИТАТЬ все документы
+DROP POLICY IF EXISTS "Authenticated users can read documents" ON storage.objects;
 CREATE POLICY "Authenticated users can read documents"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (bucket_id = 'market-documents');
 
 -- Policy 2: Admins могут делать ВСЁ
+DROP POLICY IF EXISTS "Admins have full access" ON storage.objects;
 CREATE POLICY "Admins have full access"
 ON storage.objects FOR ALL
 TO authenticated
@@ -48,6 +50,7 @@ USING (
 );
 
 -- Policy 3: Users могут загружать в свою папку user-uploads/{user_id}/
+DROP POLICY IF EXISTS "Users can upload to their folder" ON storage.objects;
 CREATE POLICY "Users can upload to their folder"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -58,6 +61,7 @@ WITH CHECK (
 );
 
 -- Policy 4: Users могут удалять свои файлы
+DROP POLICY IF EXISTS "Users can delete their files" ON storage.objects;
 CREATE POLICY "Users can delete their files"
 ON storage.objects FOR DELETE
 TO authenticated

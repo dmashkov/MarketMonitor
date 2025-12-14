@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS brands (
 );
 
 -- Индексы для производительности
-CREATE INDEX idx_brands_name ON brands(name);
-CREATE INDEX idx_brands_category ON brands(category);
-CREATE INDEX idx_brands_is_active ON brands(is_active);
+CREATE INDEX IF NOT EXISTS idx_brands_name ON brands(name);
+CREATE INDEX IF NOT EXISTS idx_brands_category ON brands(category);
+CREATE INDEX IF NOT EXISTS idx_brands_is_active ON brands(is_active);
 
 -- Триггер для обновления updated_at
 DROP TRIGGER IF EXISTS update_brands_updated_at ON brands;
@@ -74,8 +74,8 @@ CREATE TABLE IF NOT EXISTS brand_segments (
 );
 
 -- Индексы для производительности
-CREATE INDEX idx_brand_segments_brand_id ON brand_segments(brand_id);
-CREATE INDEX idx_brand_segments_segment_id ON brand_segments(segment_id);
+CREATE INDEX IF NOT EXISTS idx_brand_segments_brand_id ON brand_segments(brand_id);
+CREATE INDEX IF NOT EXISTS idx_brand_segments_segment_id ON brand_segments(segment_id);
 
 -- Комментарии
 COMMENT ON TABLE brand_segments IS 'Many-to-Many связь: бренды ↔ сегменты оборудования';

@@ -213,7 +213,7 @@ CREATE TABLE IF NOT EXISTS public.prompt_templates (
   -- Audit
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID REFERENCES public.auth.users(id) ON DELETE SET NULL
+  created_by UUID
 );
 
 CREATE INDEX IF NOT EXISTS idx_prompt_templates_stage ON public.prompt_templates(stage);
@@ -279,7 +279,7 @@ CREATE TABLE IF NOT EXISTS public.monitoring_profiles (
   -- Audit
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID REFERENCES public.auth.users(id) ON DELETE SET NULL
+  created_by UUID
 );
 
 CREATE INDEX IF NOT EXISTS idx_monitoring_profiles_active ON public.monitoring_profiles(is_active);

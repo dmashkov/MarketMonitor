@@ -1,0 +1,109 @@
+{
+  "info": {
+    "name": "Source Hunter Agent",
+    "description": "API collection for testing Source Hunter Agent Edge Function",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Test 1: Basic Search",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"новые кондиционеры на рынке России 2025\",\n  \"date_range_days\": 7\n}"
+        },
+        "url": {
+          "raw": "http://localhost:54321/functions/v1/agents/source-hunter",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "54321",
+          "path": ["functions", "v1", "agents", "source-hunter"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Test 2: Search with Filters (Segments)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"тепловые насосы в промышленности\",\n  \"segment_ids\": [\"seg-heat-pumps\"],\n  \"date_range_days\": 30\n}"
+        },
+        "url": {
+          "raw": "http://localhost:54321/functions/v1/agents/source-hunter",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "54321",
+          "path": ["functions", "v1", "agents", "source-hunter"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Test 3: Search with Geography",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"события на климатическом рынке\",\n  \"geography_ids\": [\"geo-moscow\", \"geo-spb\"],\n  \"date_range_days\": 14\n}"
+        },
+        "url": {
+          "raw": "http://localhost:54321/functions/v1/agents/source-hunter",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "54321",
+          "path": ["functions", "v1", "agents", "source-hunter"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Test 4: Error - Empty Prompt",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"prompt\": \"\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:54321/functions/v1/agents/source-hunter",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "54321",
+          "path": ["functions", "v1", "agents", "source-hunter"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

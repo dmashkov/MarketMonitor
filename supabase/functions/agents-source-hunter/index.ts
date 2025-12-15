@@ -1,11 +1,13 @@
 /**
  * Source Hunter Agent
  *
- * Автоматический поиск новых документов по промптам
+ * Автоматический поиск новых документов через Perplexity AI
  * - Загружает список доступных источников
- * - Генерирует search queries через OpenAI
- * - Выполняет поиск и создает документы в БД
- * - Сохраняет найденные URLs для дальнейшей обработки
+ * - Генерирует search queries через OpenAI (gpt-4o-mini)
+ * - Выполняет РЕАЛЬНЫЙ поиск через Perplexity API с web search
+ * - Создает документы в БД с реальными URLs
+ * - Сохраняет найденные URLs для дальнейшей обработки Content Fetcher
+ * - Rate limiting: 1000 запросов/день MAX (защита от превышения бюджета)
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.0';
@@ -174,30 +176,160 @@ async function generateSearchQueries(prompt: string, sources: SearchSource[]): P
 }
 
 /**
- * Выполнить поиск документов (mock implementation)
- *
- * В реальном приложении здесь должна быть интеграция с:
- * - Google Search API
- * - Bing Search API
- * - Web scraping библиотеки
- * - OpenAI Web Search capability
+ * Проверить лимит Perplexity API (1000 запросов/день)
+ */
+async function canMakePerplexitySearch(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc('can_make_perplexity_search');
+
+    if (error) {
+      console.error('Error checking Perplexity limit:', error);
+      return false;
+    }
+
+    return data === true;
+  } catch (error) {
+    console.error('Failed to check Perplexity limit:', error);
+    return false;
+  }
+}
+
+/**
+ * Инкрементировать счетчик использования Perplexity API
+ */
+async function incrementPerplexityUsage(): Promise<number> {
+  try {
+    const { data, error } = await supabase.rpc('increment_perplexity_usage');
+
+    if (error) {
+      console.error('Error incrementing Perplexity usage:', error);
+      return 0;
+    }
+
+    return data || 0;
+  } catch (error) {
+    console.error('Failed to increment Perplexity usage:', error);
+    return 0;
+  }
+}
+
+/**
+ * Выполнить РЕАЛЬНЫЙ поиск через Perplexity API
  */
 async function searchDocuments(query: string, source: SearchSource): Promise<SearchResult[]> {
-  // Mock: возвращаем примерные результаты
-  // В реальном приложении здесь будет реальный поиск
-  console.log(`[MOCK] Searching for "${query}" on ${source.name}`);
+  const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
 
-  // Эмулируем задержку сети
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  if (!perplexityApiKey) {
+    throw new Error('Missing PERPLEXITY_API_KEY environment variable');
+  }
 
-  // Mock результаты
-  return [
-    {
-      title: `${source.name}: ${query}`,
-      url: `${source.website_url || 'https://example.com'}/news/${Date.now()}`,
-      snippet: `Новость о ${query} на ${source.name}`,
-    },
-  ];
+  // Проверяем лимит запросов
+  const canSearch = await canMakePerplexitySearch();
+  if (!canSearch) {
+    console.warn(`⚠️ Perplexity API daily limit reached (1000/1000). Skipping search for ${source.name}`);
+    return [];
+  }
+
+  // Формируем поисковый запрос с контекстом источника
+  const searchPrompt = `
+Search for: ${query}
+
+Focus on content from: ${source.website_url || source.name}
+${source.telegram_channel ? `Also check Telegram channel: ${source.telegram_channel}` : ''}
+
+Find recent news, articles, or announcements related to HVAC equipment, climate control, and air conditioning market in Russia.
+
+Return only real, verifiable sources with actual URLs.
+  `.trim();
+
+  console.log(`🔍 Searching via Perplexity API: "${query}" for ${source.name}`);
+
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${perplexityApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'sonar',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful research assistant that finds recent news articles and returns structured data with real URLs.',
+          },
+          {
+            role: 'user',
+            content: searchPrompt,
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 1000,
+        return_citations: true,
+        search_recency_filter: 'week', // Last week only
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Perplexity API error (${response.status}): ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    // Increment usage counter
+    const newCount = await incrementPerplexityUsage();
+    console.log(`📊 Perplexity API usage: ${newCount}/1000 today`);
+
+    // Extract citations (URLs) from Perplexity response
+    const citations = data.citations || [];
+    const message = data.choices?.[0]?.message?.content || '';
+
+    console.log(`✅ Perplexity found ${citations.length} citations for ${source.name}`);
+
+    // 🔍 DETAILED LOGGING: Log full Perplexity response for debugging
+    console.log('📋 PERPLEXITY RESPONSE DETAILS:');
+    console.log(`   Source: ${source.name}`);
+    console.log(`   Query: ${query}`);
+    console.log(`   Model: sonar`);
+    console.log(`   Citations count: ${citations.length}`);
+
+    if (citations.length > 0) {
+      console.log('   📎 Citations (URLs):');
+      citations.forEach((url: string, idx: number) => {
+        console.log(`      ${idx + 1}. ${url}`);
+      });
+    } else {
+      console.warn('   ⚠️ NO CITATIONS returned by Perplexity!');
+    }
+
+    console.log(`   📝 Message preview: ${message.substring(0, 200)}...`);
+    console.log(`   🔗 Full response structure:`, JSON.stringify({
+      choices_count: data.choices?.length || 0,
+      citations_count: citations.length,
+      has_message: !!message,
+      model: data.model,
+      usage: data.usage,
+    }, null, 2));
+
+    // Parse citations into SearchResults
+    const results: SearchResult[] = citations.map((url: string, index: number) => {
+      // Extract domain-specific title from the message or use generic
+      const titleMatch = message.match(new RegExp(`([^.]+).*?${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+      const title = titleMatch?.[1]?.trim() || `${source.name} - Article ${index + 1}`;
+
+      return {
+        title: title.substring(0, 200), // Limit title length
+        url: url,
+        snippet: message.substring(0, 300), // First 300 chars as snippet
+      };
+    });
+
+    return results;
+  } catch (error) {
+    console.error(`❌ Perplexity search failed for ${source.name}:`, error);
+    throw error;
+  }
 }
 
 /**

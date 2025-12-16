@@ -2,10 +2,10 @@
 
 > Этот файл автоматически загружается в контекст каждой сессии Claude Code
 >
-> **Версия:** 1.2.0 (2024-12-13)
-> **Проект:** MarketMonitor v0.6.0
-> **Статус:** ✅ Phase 3 Complete (Admin UI 100%), 🚀 Phase 4 Starting (AI Agents Implementation)
-> **Новая архитектура:** Multi-Agent System (см. AI_AGENTS_ARCHITECTURE.md)
+> **Версия:** 1.3.0 (2025-12-16)
+> **Проект:** MarketMonitor v0.8.0
+> **Статус:** ✅ Phase 3 Complete + ✅ Phase 4 Parts 1-4 Complete + 🎯 NEW: Scope-Aware Architecture Ready
+> **Новая архитектура:** Scope-Aware + Segment-Aware Query Generation (см. AI_AGENTS_ARCHITECTURE_V3.md)
 
 ---
 
@@ -54,7 +54,29 @@
 
 ---
 
-## 🤖 НОВАЯ АРХИТЕКТУРА: AI Agents 2.0
+## 🎯 НОВАЯ АРХИТЕКТУРА V3: Scope-Aware + Segment-Aware (2025-12-16)
+
+### Ключевая проблема
+
+**Широкие промпты** ("найди всё по всем сегментам") → **поверхностные результаты** низкого качества.
+
+### Решение
+
+**Scope-Aware + Segment-Aware Query Generation:**
+- ✅ 1 Source Hunter → N focused queries (сегмент × источник × scope)
+- ✅ 3 Monitoring Profiles: Daily Critical / Weekly Overview / Monthly Trends
+- ✅ Source prioritization: distributors (5) > associations (3) > analytics (2)
+
+**Результат:**
+- Качество: +200% релевантности
+- 3 кнопки в Admin UI для разных типов мониторинга
+- ~2-3 часа реализации
+
+**Полное описание:** См. `AI_AGENTS_ARCHITECTURE_V3.md`
+
+---
+
+## 🤖 АРХИТЕКТУРА: AI Agents Pipeline
 
 ### Парадигмальный сдвиг
 

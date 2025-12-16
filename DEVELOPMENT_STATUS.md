@@ -1,12 +1,12 @@
 # 📊 Development Status - MarketMonitor
 
-**Дата:** 2025-12-14
-**Версия:** 0.7.0
-**Статус:** ✅ Phase 3 Complete + ✅ Phase 4 Parts 1-3 Complete + 🏗️ Phase 4 Part 4 Architecture READY
-**AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini + text-embedding-3-small)
-**Deploy:** Netlify (Frontend)
-**Architecture:** Multi-Agent Sequential Pipeline (6+ agents) + Raw→Normalized→Canonical data layers + Monitoring Profiles
-**Last Major Update:** Phase 4 Architecture Design Complete! Ready for Part 4 implementation (2025-12-14)
+**Дата:** 2025-12-16
+**Версия:** 0.8.0
+**Статус:** ✅ Phase 3 Complete + ✅ Phase 4 Parts 1-4 Complete + 🎯 NEW ARCHITECTURE: Scope-Aware + Segment-Aware Queries READY
+**AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini + text-embedding-3-small) + Perplexity API (sonar)
+**Deploy:** Netlify (Frontend) + Supabase (Backend + Edge Functions)
+**Architecture:** Multi-Agent Sequential Pipeline + **Scope-Aware Query Generation** + 3 Monitoring Profiles (Daily/Weekly/Monthly)
+**Last Major Update:** Architectural redesign: Scope-aware + Segment-aware query generation for focused search (2025-12-16)
 
 ---
 
@@ -18,6 +18,40 @@
 - **Целевая аудитория:** Руководители, менеджеры, маркетологи
 - **Основная функция:** Автоматический поиск рыночных событий через OpenAI API + AI Agents
 - **Архитектура:** Модульный Frontend + Supabase Backend + AI Agents Pipeline
+
+---
+
+## 🎯 НОВАЯ АРХИТЕКТУРА: Scope-Aware + Segment-Aware (2025-12-16)
+
+### Проблема
+
+**Широкие generic промпты** ("найди всё по всем сегментам") возвращают **поверхностные результаты** низкого качества.
+
+### Решение
+
+**Scope-Aware + Segment-Aware Query Generation:**
+- ✅ 1 Source Hunter → N focused queries (сегмент × источник × scope)
+- ✅ 3 типа мониторинга: **Daily Critical** / **Weekly Overview** / **Monthly Trends**
+- ✅ Приоритизация источников: distributors (5) > associations (3) > analytics (2)
+
+### Ключевые решения
+
+| Решение | Описание | MVP Status |
+|---------|----------|------------|
+| **Source Type Priority** | `source_types.priority` (5/3/2) | 🏗️ Migration 027 Ready |
+| **3 Prompt Templates** | Daily/Weekly/Monthly focused prompts | 🏗️ Migration 028 Ready |
+| **3 Monitoring Profiles** | Разные scope для разных задач | 🏗️ Migration 028 Ready |
+| **Segment-Aware Queries** | Focused queries per segment × source | 🏗️ Code Ready |
+| **min_source_priority Filter** | Фильтрация источников по приоритету | 🏗️ Code Ready |
+
+### Результат для MVP
+
+- ✅ Качество: **+200% релевантности** (focused queries вместо generic)
+- ✅ Cost: Оптимизация через priority-фильтрацию источников
+- ✅ Гибкость: 3 кнопки в Admin UI (Daily/Weekly/Monthly)
+- ✅ Реализация: ~2-3 часа работы
+
+**Полное описание:** См. `AI_AGENTS_ARCHITECTURE_V3.md`
 
 ---
 

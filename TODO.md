@@ -1,16 +1,15 @@
 # TODO List - MarketMonitor
 
-**Последнее обновление:** 2025-12-13
-**Версия:** 0.6.0
-**Статус:** Phase 3 ✅ Complete, Phase 4 🚀 Starting
-**AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini + text-embedding-3-small)
+**Последнее обновление:** 2025-12-16
+**Версия:** 0.8.0
+**Статус:** Phase 3 ✅ Complete, Phase 4 Parts 1-4 ✅ Complete, 🎯 NEW ARCHITECTURE Ready for Implementation
+**AI Provider:** OpenAI API (gpt-4o + gpt-4o-mini) + Perplexity API (sonar)
 **Frontend:** Netlify Deploy
-**Architecture:** Multi-Agent System (8 specialized agents)
+**Architecture:** Scope-Aware + Segment-Aware Query Generation (3 Monitoring Profiles)
 
 **См. также:**
 - [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) - текущий статус
-- [PROGRESS.md](PROGRESS.md) - прогресс разработки
-- [AI_AGENTS_ARCHITECTURE.md](AI_AGENTS_ARCHITECTURE.md) - архитектура агентов
+- [AI_AGENTS_ARCHITECTURE_V3.md](AI_AGENTS_ARCHITECTURE_V3.md) - новая архитектура ⭐
 - [ROADMAP.md](ROADMAP.md) - долгосрочный план
 
 ---
@@ -58,6 +57,271 @@
 - [x] Full CRUD operations working
 - [x] RLS policies applied
 - [x] Type-safe code (NO ANY)
+
+---
+
+## 🎯 PHASE 4 PART 4B: Scope-Aware Architecture Implementation (НОВОЕ - 2025-12-16)
+
+**Priority:** ⭐ CRITICAL - Architectural Foundation
+**Time Estimate:** 2-3 часа
+**Описание:** Реализация Scope-Aware + Segment-Aware Query Generation
+
+### Task 1: Database Migrations (30 минут)
+
+#### A. Migration 027: Source Type Priorities
+- [ ] Создать `supabase/migrations/027_source_types_priority.sql`
+- [ ] Добавить column `priority INT DEFAULT 3` к `source_types`
+- [ ] Seed priorities:
+  - `priority = 5` для distributor, manufacturer, government, tender_platform
+  - `priority = 3` для association
+  - `priority = 2` для business_media, analytics
+- [ ] Создать index `idx_source_types_priority`
+- [ ] Применить миграцию на Supabase
+
+**Files:**
+- `supabase/migrations/027_source_types_priority.sql`
+
+**Commands:**
+```bash
+# Применить миграцию
+SUPABASE_ACCESS_TOKEN="your-token" npx supabase db push
+```
+
+---
+
+#### B. Migration 028: Prompt Templates & Monitoring Profiles
+- [ ] Создать `supabase/migrations/028_prompt_templates_profiles.sql`
+- [ ] Добавить `priority INT` к `prompt_templates`
+- [ ] Добавить `min_source_priority INT DEFAULT 1` к `monitoring_profiles`
+- [ ] Seed 3 prompt templates:
+  - Daily Critical Events (priority 5)
+  - Weekly Industry Overview (priority 3)
+  - Monthly Global Trends (priority 2)
+- [ ] Seed 3 monitoring profiles (linked to templates)
+- [ ] Применить миграцию на Supabase
+
+**Files:**
+- `supabase/migrations/028_prompt_templates_profiles.sql`
+
+**Validation:**
+```sql
+-- Проверить данные
+SELECT * FROM source_types ORDER BY priority DESC;
+SELECT * FROM prompt_templates;
+SELECT * FROM monitoring_profiles;
+```
+
+---
+
+### Task 2: Source Hunter V2 Implementation (1-1.5 часа)
+
+#### A. Update getSearchSources() - Priority Filtering (15 мин)
+- [ ] Добавить параметр `min_priority` к функции
+- [ ] Фильтровать источники: `source_types.priority >= min_priority`
+- [ ] ORDER BY priority DESC
+- [ ] LIMIT по `max_sources`
+
+**File:** `supabase/functions/source-hunter/index.ts`
+
+**Code:**
+```typescript
+async function getSearchSources(
+  segment_ids?: string[],
+  geography_ids?: string[],
+  min_priority: number = 1,
+  max_sources: number = 20
+): Promise<SearchSource[]> {
+  // См. AI_AGENTS_ARCHITECTURE_V3.md, раздел "Source Hunter V2"
+}
+```
+
+---
+
+#### B. Add getSegments() Helper (5 мин)
+- [ ] Создать функцию `getSegments(segment_ids: string[])`
+- [ ] Загружать `id, code, name, description` из таблицы `segments`
+
+**Code:**
+```typescript
+async function getSegments(segment_ids: string[]): Promise<Segment[]> {
+  const { data } = await supabase
+    .from('segments')
+    .select('id, code, name, description')
+    .in('id', segment_ids);
+  return data as Segment[];
+}
+```
+
+---
+
+#### C. Add generateSegmentAwareQueries() (30 мин)
+- [ ] Создать функцию для генерации focused queries
+- [ ] Для каждого segment: вызвать GPT-4o-mini
+- [ ] Передать: basePrompt, segment info, sources list
+- [ ] Вернуть: `Map<segment_id, Map<source_id, query>>`
+
+**Code:**
+```typescript
+async function generateSegmentAwareQueries(
+  basePrompt: string,
+  sources: SearchSource[],
+  segments: Segment[]
+): Promise<Map<string, Map<string, string>>> {
+  // См. AI_AGENTS_ARCHITECTURE_V3.md, раздел "Source Hunter V2"
+  // Использовать gpt-4o-mini для query generation
+}
+```
+
+---
+
+#### D. Update saveDocument() - Add Segment Linking (10 мин)
+- [ ] Переименовать в `saveDocumentWithSegment()`
+- [ ] После создания документа: INSERT в `document_segments`
+- [ ] Параметры: `title, url, sourceId, segmentId, documentType`
+
+**Code:**
+```typescript
+async function saveDocumentWithSegment(
+  title: string,
+  url: string,
+  sourceId: string,
+  segmentId: string,
+  documentType: 'webpage' = 'webpage'
+): Promise<string | null> {
+  // 1. Create document
+  // 2. Link to segment via document_segments
+  // См. AI_AGENTS_ARCHITECTURE_V3.md
+}
+```
+
+---
+
+#### E. Update Main Handler (10 мин)
+- [ ] Добавить `min_source_priority` к `SourceHunterRequest`
+- [ ] Вызвать `getSegments()`
+- [ ] Вызвать `generateSegmentAwareQueries()`
+- [ ] Loop: для каждого segment × source → searchDocuments()
+- [ ] Сохранять с `saveDocumentWithSegment()`
+
+**Changes:**
+```typescript
+interface SourceHunterRequest {
+  prompt: string;
+  segment_ids?: string[];
+  geography_ids?: string[];
+  min_source_priority?: number;  // ← НОВОЕ
+  max_sources_per_run?: number;
+}
+```
+
+---
+
+### Task 3: Orchestrator Update (15 мин)
+
+#### Update runSourceHunter() Call
+- [ ] Добавить `min_source_priority` к body запроса
+- [ ] Передавать `profile.min_source_priority || 1`
+
+**File:** `supabase/functions/search-orchestrator/index.ts`
+
+**Code:**
+```typescript
+body: JSON.stringify({
+  prompt,
+  monitoring_profile_id: monitoringProfileId,
+  search_run_id: searchRunId,
+  segment_ids: profile.segment_ids,
+  geography_ids: profile.geography_ids,
+  min_source_priority: profile.min_source_priority || 1,  // ← НОВОЕ
+  max_sources_per_run: profile.max_sources_per_run || 20,
+}),
+```
+
+---
+
+### Task 4: Admin UI Update (30 мин)
+
+#### Update RunPipelinePanel Component
+- [ ] Load monitoring profiles from DB
+- [ ] Display 3 cards (Daily/Weekly/Monthly)
+- [ ] Show profile metadata (priority, max_sources, min_source_priority)
+- [ ] Add "Запустить" button for each profile
+- [ ] Call orchestrator with `profile.id`
+
+**File:** `frontend/src/modules/admin/pipeline/RunPipelinePanel.tsx`
+
+**UI Design:**
+```tsx
+<Card title="🔥 Daily Critical Monitoring">
+  <Descriptions>
+    <Item label="Priority">HIGH (5)</Item>
+    <Item label="Max Sources">30</Item>
+    <Item label="Min Source Priority">5 (distributors, manufacturers)</Item>
+  </Descriptions>
+  <Button onClick={() => runPipeline(dailyProfileId)}>
+    Запустить
+  </Button>
+</Card>
+```
+
+---
+
+### Task 5: Testing & Validation (15 мин)
+
+#### A. Database Validation
+- [ ] Проверить source_types.priority заполнены
+- [ ] Проверить 3 prompt_templates созданы
+- [ ] Проверить 3 monitoring_profiles созданы
+- [ ] Проверить min_source_priority установлены
+
+**Commands:**
+```sql
+SELECT id, code, priority FROM source_types ORDER BY priority DESC;
+SELECT id, name, stage, priority FROM prompt_templates;
+SELECT id, name, min_source_priority, max_sources_per_run FROM monitoring_profiles;
+```
+
+---
+
+#### B. Source Hunter Testing
+- [ ] Deploy updated `source-hunter` to Supabase
+- [ ] Test via Postman/curl с `min_source_priority = 5`
+- [ ] Проверить что возвращаются только high-priority sources
+- [ ] Проверить segment-aware queries generation
+- [ ] Проверить document_segments linking создается
+
+**Command:**
+```bash
+SUPABASE_ACCESS_TOKEN="your-token" npx supabase functions deploy source-hunter
+```
+
+---
+
+#### C. End-to-End Pipeline Test
+- [ ] Deploy `search-orchestrator`
+- [ ] Запустить через Admin UI кнопку "Daily Critical"
+- [ ] Проверить логи: Source Hunter → Content Fetcher → Document Processor
+- [ ] Проверить созданные документы в БД
+- [ ] Проверить segment linking в `document_segments`
+
+---
+
+### Success Criteria
+
+**Quality:**
+- ✅ Queries focused on specific segments (RAC, VRF, CHILLER)
+- ✅ Only high-priority sources used for Daily Critical
+- ✅ Segment linking работает (`document_segments` заполняется)
+
+**Functionality:**
+- ✅ 3 кнопки в Admin UI работают
+- ✅ Каждая кнопка запускает соответствующий monitoring profile
+- ✅ Pipeline завершается без ошибок
+- ✅ Документы создаются с правильными segment links
+
+**Performance:**
+- ✅ Source Hunter выполнение: ~30-60 seconds (3 segments × 10 sources)
+- ✅ Full pipeline: ~3-5 минут
 
 ---
 

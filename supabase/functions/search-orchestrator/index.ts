@@ -174,7 +174,7 @@ async function runSourceHunter(
   profile: MonitoringProfile,
   authHeader: string
 ): Promise<SourceHunterResponse> {
-  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/agents-source-hunter`;
+  const functionUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/source-hunter`;
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
 
   console.log('🔍 Calling Source Hunter:', {

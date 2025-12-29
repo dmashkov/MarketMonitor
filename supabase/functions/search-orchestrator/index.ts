@@ -319,6 +319,7 @@ async function handleRequest(req: Request): Promise<Response> {
 
     // Validate input
     if (!body.monitoring_profile_id) {
+      console.error('❌ Missing monitoring_profile_id');
       return new Response(
         JSON.stringify({
           status: 'failed',
@@ -335,17 +336,44 @@ async function handleRequest(req: Request): Promise<Response> {
     // Extract user ID from Authorization header
     const authHeader = req.headers.get('Authorization') || '';
     const userId = extractUserIdFromToken(authHeader);
+    console.log('👤 User ID:', userId);
 
     // 1. Load monitoring profile
-    console.log(`Loading monitoring profile: ${body.monitoring_profile_id}`);
-    const profile = await loadMonitoringProfile(body.monitoring_profile_id);
+    console.log(`📋 Loading monitoring profile: ${body.monitoring_profile_id}`);
+    let profile: MonitoringProfile;
+    try {
+      profile = await loadMonitoringProfile(body.monitoring_profile_id);
+      console.log('✅ Profile loaded:', {
+        name: profile.name,
+        priority: profile.priority,
+        min_source_priority: profile.min_source_priority,
+        max_sources: profile.max_sources_per_run,
+        prompt_template_id: profile.prompt_template_id,
+        segment_ids_count: profile.segment_ids?.length || 0
+      });
+    } catch (profileError) {
+      console.error('❌ Failed to load profile:', profileError);
+      throw profileError;
+    }
 
     // 2. Load prompt template
     if (!profile.prompt_template_id) {
+      console.error('❌ Profile has no prompt_template_id');
       throw new Error('Monitoring profile has no prompt template configured');
     }
-    console.log(`Loading prompt template: ${profile.prompt_template_id}`);
-    const promptTemplate = await loadPromptTemplate(profile.prompt_template_id);
+    console.log(`📝 Loading prompt template: ${profile.prompt_template_id}`);
+    let promptTemplate: PromptTemplate;
+    try {
+      promptTemplate = await loadPromptTemplate(profile.prompt_template_id);
+      console.log('✅ Template loaded:', {
+        name: promptTemplate.name,
+        stage: promptTemplate.stage,
+        text_length: promptTemplate.template_text?.length || 0
+      });
+    } catch (templateError) {
+      console.error('❌ Failed to load template:', templateError);
+      throw templateError;
+    }
 
     // 3. Create search_run record
     console.log('Creating search_run...');

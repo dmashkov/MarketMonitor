@@ -48,12 +48,24 @@ export interface MonitoringProfile {
 export function usePipelineRunner() {
   return useMutation({
     mutationFn: async (request: PipelineRunRequest): Promise<PipelineRunResponse> => {
+      console.log('🚀 Calling search-orchestrator with:', request);
+
       const { data, error } = await supabase.functions.invoke('search-orchestrator', {
         body: request,
       });
 
+      console.log('📡 Response:', { data, error });
+
       if (error) {
-        throw new Error(error.message || 'Failed to start pipeline');
+        console.error('❌ Edge Function error:', error);
+        const errorMessage = error.message || error.toString();
+        throw new Error(`Pipeline error: ${errorMessage}`);
+      }
+
+      // Check if data contains error
+      if (data?.status === 'failed' && data?.error) {
+        console.error('❌ Pipeline failed:', data.error);
+        throw new Error(`Pipeline failed: ${data.error}`);
       }
 
       return data as PipelineRunResponse;

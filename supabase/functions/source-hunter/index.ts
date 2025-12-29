@@ -513,7 +513,34 @@ async function handler(request: Request): Promise<Response> {
     console.log(`✅ Found ${sources.length} high-priority sources`);
 
     // Step 2: Get segments
-    const segments = await getSegments(requestData.segment_ids || []);
+    // If no segment_ids provided, load ALL active segments
+    let segments: Segment[];
+    if (!requestData.segment_ids || requestData.segment_ids.length === 0) {
+      console.log('⚠️ No segment_ids specified, loading ALL active segments');
+      const { data, error } = await supabase
+        .from('segments')
+        .select('id, code, name, description')
+        .eq('is_active', true);
+
+      if (error || !data) {
+        console.error('Error loading all segments:', error);
+        return new Response(
+          JSON.stringify({
+            status: 'error',
+            documents_created: 0,
+            urls: [],
+            error: 'Failed to load segments',
+          } as SourceHunterResponse),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      segments = data as Segment[];
+    } else {
+      segments = await getSegments(requestData.segment_ids);
+    }
 
     if (segments.length === 0) {
       return new Response(
@@ -521,7 +548,7 @@ async function handler(request: Request): Promise<Response> {
           status: 'error',
           documents_created: 0,
           urls: [],
-          error: 'No segments specified',
+          error: 'No active segments found',
         } as SourceHunterResponse),
         {
           status: 400,

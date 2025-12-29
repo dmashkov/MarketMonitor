@@ -116,6 +116,30 @@ export const RunPipelinePanel: React.FC = () => {
 
   return (
     <div>
+      {/* DEBUG CARD - TEMPORARY */}
+      <Card style={{ marginBottom: '16px', background: '#fff7e6', borderColor: '#ffd591' }}>
+        <Space>
+          <Button
+            onClick={async () => {
+              console.log('🔍 Testing debug-env...');
+              const { supabase } = await import('@/lib/supabase');
+
+              const { data, error } = await supabase.functions.invoke('debug-env', { body: {} });
+              console.log('✅ Debug result:', { data, error });
+
+              const session = await supabase.auth.getSession();
+              console.log('👤 Session:', session.data.session ? 'Logged in ✅' : 'Not logged in ❌');
+              console.log('User:', session.data.session?.user?.email);
+
+              message.info('Check browser console (F12) for debug info');
+            }}
+          >
+            🔍 Test Debug Function
+          </Button>
+          <span style={{ color: '#fa8c16' }}>Временная кнопка для отладки - проверьте консоль (F12)</span>
+        </Space>
+      </Card>
+
       {/* Monitoring Profiles Cards */}
       <Card style={{ marginBottom: '24px' }}>
         <h2>🚀 Запуск Pipeline - Выберите профиль мониторинга</h2>

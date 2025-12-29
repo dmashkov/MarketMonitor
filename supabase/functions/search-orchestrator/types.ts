@@ -67,10 +67,11 @@ export interface MonitoringProfile {
 export interface PromptTemplate {
   id: string;
   name: string;
-  stage: 'search' | 'classify' | 'extract' | 'score';
+  stage: 'hunt' | 'classify' | 'extract' | 'score';  // Changed: 'hunt' instead of 'search'
   template_text: string;
   is_active: boolean;
   description: string | null;
+  priority?: number;  // V2: Priority for templates
 }
 
 export interface AgentResponse {

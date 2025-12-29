@@ -1,34 +1,44 @@
 /**
- * RunPipelinePanel Component
+ * RunPipelinePanel Component V2
  *
- * Admin UI for running the search orchestrator pipeline
- * - Select monitoring profile
- * - Start pipeline execution
- * - Display progress and results
+ * Admin UI for running the search orchestrator pipeline with Scope-Aware profiles
+ *
+ * V2 FEATURES:
+ * - 3 monitoring profile cards (Daily/Weekly/Monthly)
+ * - Visual priority indicators (🔥 HIGH / 📊 MEDIUM / 🌍 LOW)
+ * - Profile metadata display (max sources, min priority, etc.)
+ * - One-click pipeline execution per profile
+ *
+ * WORKFLOW:
+ * - Display all active monitoring profiles sorted by priority
+ * - User clicks "Запустить" button on desired profile
+ * - Pipeline executes with profile's scope-aware settings
+ * - Progress and results displayed below
  */
 
 import React, { useState, useEffect } from 'react';
 import {
   Card,
-  Form,
-  Select,
   Button,
   Space,
   Spin,
-  Alert,
   Statistic,
   Row,
   Col,
   Empty,
   Result,
   Table,
+  Descriptions,
+  Tag,
+  message,
 } from 'antd';
 import {
   PlayCircleOutlined,
-  StopOutlined,
-  ReloadOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
+  FireOutlined,
+  BarChartOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons';
 import {
   usePipelineRunner,
@@ -39,15 +49,15 @@ import {
 import { PipelineProgress } from '../components/PipelineProgress';
 
 export const RunPipelinePanel: React.FC = () => {
-  const [form] = Form.useForm();
-  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [currentSearchRunId, setCurrentSearchRunId] = useState<string | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
   const [lastResult, setLastResult] = useState<PipelineRunResponse | null>(null);
 
-  const { mutate: runPipeline, isPending: isExecuting } = usePipelineRunner();
+  const { mutate: runPipeline } = usePipelineRunner();
   const { data: profiles, isLoading: profilesLoading } = useMonitoringProfiles();
   const { data: runHistory, refetch: refetchHistory } = useSearchRunHistory();
+
+  const isRunning = activeProfileId !== null;
 
   // Poll for status updates while running
   useEffect(() => {
@@ -60,85 +70,124 @@ export const RunPipelinePanel: React.FC = () => {
     return () => clearInterval(interval);
   }, [isRunning, refetchHistory]);
 
-  const handleStartPipeline = async () => {
-    if (!selectedProfile) {
-      Alert.error('Пожалуйста, выберите профиль мониторинга');
-      return;
-    }
-
-    console.log('🚀 Starting pipeline with profile:', selectedProfile);
-    setIsRunning(true);
+  const handleStartPipeline = (profileId: string, profileName: string) => {
+    console.log('🚀 Starting pipeline with profile:', profileId, profileName);
+    setActiveProfileId(profileId);
     setLastResult(null);
 
     runPipeline(
-      { monitoring_profile_id: selectedProfile },
+      { monitoring_profile_id: profileId },
       {
         onSuccess: (result) => {
           setCurrentSearchRunId(result.search_run_id);
           setLastResult(result);
-          setIsRunning(result.status === 'running');
 
           if (result.status === 'completed') {
-            Alert.success('Pipeline выполнен успешно!');
+            message.success(`Pipeline "${profileName}" выполнен успешно!`);
+            setActiveProfileId(null);
           } else if (result.status === 'failed') {
-            Alert.error(`Pipeline завершился с ошибкой: ${result.error || 'Неизвестная ошибка'}`);
+            message.error(`Pipeline завершился с ошибкой: ${result.error || 'Неизвестная ошибка'}`);
+            setActiveProfileId(null);
           }
 
           refetchHistory();
         },
         onError: (error) => {
-          setIsRunning(false);
-          Alert.error(`Ошибка при запуске pipeline: ${error.message}`);
+          setActiveProfileId(null);
+          message.error(`Ошибка при запуске pipeline: ${error.message}`);
         },
       }
     );
   };
 
-  const profileOptions = profiles?.map((p) => ({
-    label: p.name,
-    value: p.id,
-    description: p.description,
-  })) || [];
+  // Helper to get profile icon
+  const getProfileIcon = (priority: number) => {
+    if (priority >= 5) return <FireOutlined style={{ fontSize: '24px', color: '#ff4d4f' }} />;
+    if (priority >= 3) return <BarChartOutlined style={{ fontSize: '24px', color: '#1890ff' }} />;
+    return <GlobalOutlined style={{ fontSize: '24px', color: '#52c41a' }} />;
+  };
+
+  // Helper to get priority tag
+  const getPriorityTag = (priority: number) => {
+    if (priority >= 5) return <Tag color="red">HIGH</Tag>;
+    if (priority >= 3) return <Tag color="blue">MEDIUM</Tag>;
+    return <Tag color="green">LOW</Tag>;
+  };
 
   return (
     <div>
-      {/* Control Panel */}
+      {/* Monitoring Profiles Cards */}
       <Card style={{ marginBottom: '24px' }}>
-        <h2>🚀 Запуск Pipeline</h2>
+        <h2>🚀 Запуск Pipeline - Выберите профиль мониторинга</h2>
 
-        <Form form={form} layout="vertical">
-          <Form.Item label="Профиль мониторинга" required>
-            <Select
-              placeholder="Выберите профиль мониторинга"
-              value={selectedProfile}
-              onChange={setSelectedProfile}
-              options={profileOptions}
-              disabled={isExecuting || isRunning}
-              loading={profilesLoading}
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button
-                type="primary"
-                icon={<PlayCircleOutlined />}
-                onClick={handleStartPipeline}
-                disabled={!selectedProfile || isRunning}
-                loading={isExecuting}
-                size="large"
-              >
-                Запустить Pipeline
-              </Button>
-
-              {isRunning && (
-                <Button icon={<ReloadOutlined spin />} disabled>
-                  Выполняется...
-                </Button>
-              )}
-            </Space>
-          </Form.Item>
-        </Form>
+        {profilesLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <Spin size="large" />
+            <p style={{ marginTop: '16px' }}>Загрузка профилей мониторинга...</p>
+          </div>
+        ) : profiles && profiles.length > 0 ? (
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            {profiles
+              .sort((a, b) => (b.priority || 0) - (a.priority || 0)) // Sort by priority DESC
+              .map((profile) => (
+                <Card
+                  key={profile.id}
+                  type="inner"
+                  title={
+                    <Space>
+                      {getProfileIcon(profile.priority || 3)}
+                      <span style={{ fontSize: '18px', fontWeight: 600 }}>{profile.name}</span>
+                      {getPriorityTag(profile.priority || 3)}
+                    </Space>
+                  }
+                  extra={
+                    <Button
+                      type="primary"
+                      size="large"
+                      icon={<PlayCircleOutlined />}
+                      loading={activeProfileId === profile.id}
+                      disabled={isRunning && activeProfileId !== profile.id}
+                      onClick={() => handleStartPipeline(profile.id, profile.name)}
+                    >
+                      {activeProfileId === profile.id ? 'Выполняется...' : 'Запустить'}
+                    </Button>
+                  }
+                  style={{
+                    borderLeft: `4px solid ${
+                      profile.priority >= 5 ? '#ff4d4f' : profile.priority >= 3 ? '#1890ff' : '#52c41a'
+                    }`,
+                  }}
+                >
+                  <Descriptions column={2} size="small">
+                    <Descriptions.Item label="Описание" span={2}>
+                      {profile.description || 'Нет описания'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Макс. источников">
+                      {profile.max_sources_per_run || 20}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Мин. приоритет источников">
+                      {profile.min_source_priority || 1}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Порог дедупликации">
+                      {profile.dedupe_threshold ? `${(profile.dedupe_threshold * 100).toFixed(0)}%` : '-'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Статус">
+                      {profile.is_active ? (
+                        <Tag color="green">Активен</Tag>
+                      ) : (
+                        <Tag color="default">Неактивен</Tag>
+                      )}
+                    </Descriptions.Item>
+                  </Descriptions>
+                </Card>
+              ))}
+          </Space>
+        ) : (
+          <Empty
+            description="Профили мониторинга не найдены"
+            style={{ padding: '40px' }}
+          />
+        )}
       </Card>
 
       {/* Progress Display */}
@@ -191,13 +240,19 @@ export const RunPipelinePanel: React.FC = () => {
               title="Pipeline завершился с ошибкой"
               subTitle={lastResult.error || lastResult.message || 'Неизвестная ошибка'}
               extra={
-                <Button
-                  type="primary"
-                  onClick={handleStartPipeline}
-                  disabled={!selectedProfile}
-                >
-                  Повторить
-                </Button>
+                lastResult?.monitoring_profile_id && (
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      const profile = profiles?.find(p => p.id === lastResult.monitoring_profile_id);
+                      if (profile) {
+                        handleStartPipeline(profile.id, profile.name);
+                      }
+                    }}
+                  >
+                    Повторить
+                  </Button>
+                )
               }
             />
           ) : (

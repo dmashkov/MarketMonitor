@@ -58,6 +58,7 @@ export interface MonitoringProfile {
   event_type_ids: string[];
   priority: number;
   max_sources_per_run: number;
+  min_source_priority: number;       // V2: Filter sources by priority (5/3/2)
   dedupe_threshold: number;
   prompt_template_id: string | null;
   schedule_cron: string | null;

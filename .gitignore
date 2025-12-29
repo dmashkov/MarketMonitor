@@ -68,3 +68,4 @@ Thumbs.db
 dist/
 .parcel-cache
 add_admin.sql
+nul

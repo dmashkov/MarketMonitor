@@ -1,10 +1,14 @@
 /**
- * Search Orchestrator Agent
+ * Search Orchestrator Agent V2
  *
  * Координирование всех агентов в последовательной цепочке:
- * 1. Source Hunter - Поиск и создание документов
+ * 1. Source Hunter V2 - Поиск и создание документов (с priority filtering)
  * 2. Content Fetcher - Загрузка контента
  * 3. Document Processor - Классификация и embeddings
+ *
+ * V2 UPDATES:
+ * - Передает min_source_priority в Source Hunter V2
+ * - Передает max_sources_per_run для ограничения источников
  *
  * Управляет:
  * - Созданием search_run
@@ -197,6 +201,8 @@ async function runSourceHunter(
       search_run_id: searchRunId,
       segment_ids: profile.segment_ids,
       geography_ids: profile.geography_ids,
+      min_source_priority: profile.min_source_priority || 1,  // V2: Priority filtering
+      max_sources_per_run: profile.max_sources_per_run || 20, // V2: Limit sources
     }),
   });
 

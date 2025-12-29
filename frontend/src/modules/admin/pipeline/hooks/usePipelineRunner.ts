@@ -15,11 +15,31 @@ export interface PipelineRunRequest {
 export interface PipelineRunResponse {
   status: 'running' | 'completed' | 'failed';
   search_run_id: string;
+  monitoring_profile_id?: string;
   documents_created?: number;
   events_created?: number;
   duration_seconds?: number;
   error?: string;
   message?: string;
+}
+
+export interface MonitoringProfile {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  segment_ids: string[];
+  brand_ids: string[];
+  geography_ids: string[];
+  event_type_ids: string[];
+  priority: number;
+  max_sources_per_run: number;
+  min_source_priority: number;       // V2: Filter sources by priority
+  dedupe_threshold: number;
+  prompt_template_id: string | null;
+  schedule_cron: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -90,7 +110,7 @@ export function useSearchRunStages(searchRunId: string) {
  * Fetch available monitoring profiles
  */
 export function useMonitoringProfiles() {
-  return useQuery({
+  return useQuery<MonitoringProfile[]>({
     queryKey: ['monitoring-profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -103,7 +123,7 @@ export function useMonitoringProfiles() {
         throw new Error(error.message || 'Failed to fetch monitoring profiles');
       }
 
-      return data;
+      return data as MonitoringProfile[];
     },
   });
 }

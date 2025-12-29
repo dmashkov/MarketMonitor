@@ -19,6 +19,27 @@ ADD COLUMN IF NOT EXISTS min_source_priority INT DEFAULT 1;
 COMMENT ON COLUMN public.monitoring_profiles.min_source_priority IS
 'Minimum source priority for filtering: 5=only critical sources, 3=medium+, 2=low+, 1=all';
 
+-- 2.1. Remove duplicate prompt_templates (keep only the latest)
+-- This is needed before we can add UNIQUE constraint
+DELETE FROM public.prompt_templates a
+USING public.prompt_templates b
+WHERE a.id < b.id
+  AND a.name = b.name
+  AND a.stage = b.stage;
+
+-- 2.2. Add UNIQUE constraint for ON CONFLICT to work
+-- This ensures we can use ON CONFLICT (name, stage) in INSERT statements
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'prompt_templates_name_stage_key'
+  ) THEN
+    ALTER TABLE public.prompt_templates
+    ADD CONSTRAINT prompt_templates_name_stage_key UNIQUE (name, stage);
+  END IF;
+END $$;
+
 -- ============================================================================
 -- 3. SEED PROMPT TEMPLATES
 -- ============================================================================

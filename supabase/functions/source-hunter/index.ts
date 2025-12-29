@@ -1,17 +1,25 @@
 /**
- * Source Hunter Agent
+ * Source Hunter Agent V2
  *
- * Автоматический поиск новых документов через Perplexity AI
- * - Загружает список доступных источников
- * - Генерирует search queries через OpenAI (gpt-4o-mini)
+ * Scope-Aware + Segment-Aware query generation для focused search
+ *
+ * V2 FEATURES:
+ * - Priority-based source filtering (5=HIGH, 3=MEDIUM, 2=LOW)
+ * - Segment-aware focused queries (segment × source matrix)
+ * - Segment linking via document_segments table
+ * - Configurable max_sources_per_run
+ *
+ * WORKFLOW:
+ * - Загружает высокоприоритетные источники (min_source_priority)
+ * - Загружает сегменты для focused query generation
+ * - Генерирует segment-aware queries через OpenAI (gpt-4o-mini)
  * - Выполняет РЕАЛЬНЫЙ поиск через Perplexity API с web search
- * - Создает документы в БД с реальными URLs
- * - Сохраняет найденные URLs для дальнейшей обработки Content Fetcher
+ * - Создает документы в БД с реальными URLs + segment links
  * - Rate limiting: 1000 запросов/день MAX (защита от превышения бюджета)
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.0';
-import { SourceHunterRequest, SourceHunterResponse, SearchSource, SearchResult } from './types.ts';
+import { SourceHunterRequest, SourceHunterResponse, SearchSource, SearchResult, Segment } from './types.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,16 +42,22 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
  * Загрузить список доступных источников для поиска
+ * V2: С фильтрацией по приоритету source_type
  */
 async function getSearchSources(
   segment_ids?: string[],
-  geography_ids?: string[]
+  geography_ids?: string[],
+  min_priority: number = 1,      // NEW: Filter by source_type priority
+  max_sources: number = 20        // NEW: Limit number of sources
 ): Promise<SearchSource[]> {
   try {
     let query = supabase
       .from('sources')
-      .select('id, name, source_type_id, website_url, telegram_channel, priority')
-      .eq('is_active', true);
+      .select('id, name, source_type_id, website_url, telegram_channel, priority, source_types!inner(priority)')
+      .eq('is_active', true)
+      .gte('source_types.priority', min_priority)  // NEW: Filter by source_type priority
+      .order('source_types.priority', { ascending: false })
+      .limit(max_sources);  // NEW: Limit results
 
     // NOTE: source_segments and source_geographies tables don't exist in current schema
     // For now, ignore segment and geography filters and return all active sources
@@ -77,7 +91,7 @@ async function getSearchSources(
     //   }
     // }
 
-    const { data, error } = await query.order('priority', { ascending: false });
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching sources:', error);
@@ -92,87 +106,128 @@ async function getSearchSources(
 }
 
 /**
- * Генерировать search queries для каждого источника через OpenAI
+ * Загрузить сегменты для focused query generation
+ * V2: NEW function
  */
-async function generateSearchQueries(prompt: string, sources: SearchSource[]): Promise<Map<string, string>> {
+async function getSegments(segment_ids: string[]): Promise<Segment[]> {
+  if (!segment_ids || segment_ids.length === 0) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('segments')
+      .select('id, code, name, description')
+      .in('id', segment_ids);
+
+    if (error) {
+      console.error('Error fetching segments:', error);
+      return [];
+    }
+
+    return (data as Segment[]) || [];
+  } catch (error) {
+    console.error('Error getting segments:', error);
+    return [];
+  }
+}
+
+/**
+ * Генерировать segment-aware search queries
+ * V2: KEY FEATURE - Focused queries per segment × source
+ */
+async function generateSegmentAwareQueries(
+  basePrompt: string,
+  sources: SearchSource[],
+  segments: Segment[]
+): Promise<Map<string, Map<string, string>>> {
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiKey) {
     throw new Error('Missing OPENAI_API_KEY');
   }
 
-  const sourceNames = sources.map((s) => s.name).join(', ');
+  const result = new Map<string, Map<string, string>>();
 
-  const systemPrompt = `Вы помощник по генерации search queries для поиска рыночных событий на климатическом рынке России.
+  console.log(`🧠 Generating segment-aware queries for ${segments.length} segments × ${sources.length} sources`);
 
-Вам даны:
-1. Основной промпт пользователя
-2. Список доступных источников
+  // Для каждого сегмента генерируем focused queries
+  for (const segment of segments) {
+    const sourceNames = sources.map((s) => s.name).join(', ');
 
-Ваша задача: для каждого источника сгенерировать оптимальный search query.
+    const systemPrompt = `Вы помощник по генерации search queries для поиска событий на рынке климатического оборудования.
 
 Правила:
-- Queries должны быть на русском языке
-- Включать ключевые слова из промпта
-- Быть релевантными для конкретного источника
+- Queries на русском языке
+- Включать ключевые слова из базового промпта
+- Быть релевантными для КОНКРЕТНОГО сегмента
+- Быть релевантными для КОНКРЕТНОГО источника
 - Максимально специфичные (не общие)
 
 Ответ: JSON объект {
-  "source_name_1": "search query 1",
-  "source_name_2": "search query 2"
+  "source_name_1": "focused query 1",
+  "source_name_2": "focused query 2"
 }`;
 
-  const userPrompt = `Основной промпт: "${prompt}"
+    const userPrompt = `Базовый промпт: "${basePrompt}"
+
+Сегмент: ${segment.name} (${segment.code})
+Описание: ${segment.description || ''}
 
 Доступные источники: ${sourceNames}
 
-Сгенерируй оптимальные search queries для каждого источника.`;
+Сгенерируй оптимальные search queries для каждого источника С УЧЕТОМ СЕГМЕНТА "${segment.name}".`;
 
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openaiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-      }),
-    });
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',  // Дешевая модель
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 1500,
+        }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-
-    // Parse JSON response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Invalid JSON in OpenAI response');
-    }
-
-    const queries = JSON.parse(jsonMatch[0]);
-    const result = new Map<string, string>();
-
-    sources.forEach((source) => {
-      const query = queries[source.name];
-      if (query) {
-        result.set(source.id, query);
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.statusText}`);
       }
-    });
 
-    return result;
-  } catch (error) {
-    console.error('Error generating search queries:', error);
-    throw error;
+      const data = await response.json();
+      const content = data.choices[0].message.content;
+
+      // Parse JSON response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error(`❌ Invalid JSON in OpenAI response for segment ${segment.name}:`, content);
+        continue;
+      }
+
+      const queries = JSON.parse(jsonMatch[0]);
+      const segmentQueries = new Map<string, string>();
+
+      sources.forEach((source) => {
+        const query = queries[source.name];
+        if (query) {
+          segmentQueries.set(source.id, query);
+        }
+      });
+
+      result.set(segment.id, segmentQueries);
+      console.log(`✅ Generated ${segmentQueries.size} queries for segment: ${segment.name}`);
+    } catch (error) {
+      console.error(`❌ Error generating queries for segment ${segment.name}:`, error);
+      continue;
+    }
   }
+
+  return result;
 }
 
 /**
@@ -333,34 +388,54 @@ Return only real, verifiable sources with actual URLs.
 }
 
 /**
- * Сохранить найденные документы в БД
+ * Сохранить найденные документы в БД с segment linking
+ * V2: NEW - Adds segment linking to document_segments table
  */
-async function saveDocument(
+async function saveDocumentWithSegment(
   title: string,
   url: string,
   sourceId: string,
+  segmentId: string,
   documentType: 'webpage' = 'webpage'
 ): Promise<string | null> {
   try {
-    const { data, error } = await supabase.from('documents').insert({
-      title,
-      document_type: documentType,
-      source_url: url,
-      file_url: url,
-      content_text: `Документ загружен с ${url}`,
-      source_id: sourceId,
-      published_date: new Date().toISOString(),
-      fetched_at: new Date().toISOString(),
-    }).select('id').single();
+    // 1. Создать документ
+    const { data: doc, error: docError } = await supabase
+      .from('documents')
+      .insert({
+        title,
+        document_type: documentType,
+        source_url: url,
+        file_url: url,
+        content_text: `Документ загружен с ${url}`,
+        source_id: sourceId,
+        published_date: new Date().toISOString(),
+        fetched_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
 
-    if (error) {
-      console.error('Error saving document:', error);
+    if (docError || !doc) {
+      console.error('Error saving document:', docError);
       return null;
     }
 
-    return data?.id || null;
+    // 2. Создать linking с сегментом
+    const { error: linkError } = await supabase
+      .from('document_segments')
+      .insert({
+        document_id: doc.id,
+        segment_id: segmentId,
+      });
+
+    if (linkError) {
+      console.error('Error linking document to segment:', linkError);
+      // НЕ фейлим - документ уже создан
+    }
+
+    return doc.id;
   } catch (error) {
-    console.error('Error saving document:', error);
+    console.error('Error saving document with segment:', error);
     return null;
   }
 }
@@ -405,12 +480,19 @@ async function handler(request: Request): Promise<Response> {
       );
     }
 
-    console.log('Starting Source Hunter Agent with prompt:', requestData.prompt);
+    console.log('Starting Source Hunter V2 Agent with:', {
+      prompt: requestData.prompt.substring(0, 50),
+      segments: requestData.segment_ids?.length || 0,
+      min_priority: requestData.min_source_priority || 1,
+      max_sources: requestData.max_sources_per_run || 20,
+    });
 
-    // Step 1: Get available sources
+    // Step 1: Get sources (filtered by priority)
     const sources = await getSearchSources(
       requestData.segment_ids,
-      requestData.geography_ids
+      requestData.geography_ids,
+      requestData.min_source_priority || 1,
+      requestData.max_sources_per_run || 20
     );
 
     if (sources.length === 0) {
@@ -419,7 +501,7 @@ async function handler(request: Request): Promise<Response> {
           status: 'error',
           documents_created: 0,
           urls: [],
-          error: 'No sources found matching the filters',
+          error: 'No high-priority sources found',
         } as SourceHunterResponse),
         {
           status: 400,
@@ -428,42 +510,81 @@ async function handler(request: Request): Promise<Response> {
       );
     }
 
-    console.log(`Found ${sources.length} sources`);
+    console.log(`✅ Found ${sources.length} high-priority sources`);
 
-    // Step 2: Generate search queries for each source
-    const searchQueries = await generateSearchQueries(requestData.prompt, sources);
-    console.log(`Generated ${searchQueries.size} search queries`);
+    // Step 2: Get segments
+    const segments = await getSegments(requestData.segment_ids || []);
 
-    // Step 3: Search documents and save to DB
+    if (segments.length === 0) {
+      return new Response(
+        JSON.stringify({
+          status: 'error',
+          documents_created: 0,
+          urls: [],
+          error: 'No segments specified',
+        } as SourceHunterResponse),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log(`✅ Loaded ${segments.length} segments`);
+
+    // Step 3: Generate segment-aware queries
+    const allQueries = await generateSegmentAwareQueries(
+      requestData.prompt,
+      sources,
+      segments
+    );
+
+    console.log(`✅ Generated queries for ${allQueries.size} segments`);
+
+    // Step 4: Search and save (для каждого segment × source)
     const urls: string[] = [];
     const documentIds: string[] = [];
     let documentsCreated = 0;
 
-    for (const source of sources) {
-      const query = searchQueries.get(source.id);
-      if (!query) {
-        console.log(`No query generated for source: ${source.name}`);
+    for (const segment of segments) {
+      const segmentQueries = allQueries.get(segment.id);
+      if (!segmentQueries) {
+        console.log(`⚠️ No queries generated for segment: ${segment.name}`);
         continue;
       }
 
-      try {
-        const results = await searchDocuments(query, source);
-
-        for (const result of results) {
-          const docId = await saveDocument(result.title, result.url, source.id);
-          if (docId) {
-            documentsCreated++;
-            urls.push(result.url);
-            documentIds.push(docId);
-          }
+      for (const source of sources) {
+        const query = segmentQueries.get(source.id);
+        if (!query) {
+          continue;
         }
-      } catch (error) {
-        console.error(`Error searching source ${source.name}:`, error);
-        continue;
+
+        try {
+          console.log(`🔍 Searching: ${segment.name} @ ${source.name}`);
+          const results = await searchDocuments(query, source);
+
+          for (const result of results) {
+            const docId = await saveDocumentWithSegment(
+              result.title,
+              result.url,
+              source.id,
+              segment.id  // NEW: сохраняем segment linking
+            );
+
+            if (docId) {
+              documentsCreated++;
+              urls.push(result.url);
+              documentIds.push(docId);
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Error searching ${segment.name} @ ${source.name}:`, error);
+          continue;
+        }
       }
     }
 
-    console.log(`Successfully created ${documentsCreated} documents`);
+    console.log(`✅ Successfully created ${documentsCreated} documents across ${segments.length} segments`);
 
     // Return success response
     return new Response(
@@ -472,7 +593,7 @@ async function handler(request: Request): Promise<Response> {
         documents_created: documentsCreated,
         document_ids: documentIds,
         urls,
-        message: `Found and saved ${documentsCreated} documents`,
+        message: `Found and saved ${documentsCreated} documents across ${segments.length} segments`,
       } as SourceHunterResponse),
       {
         status: 200,

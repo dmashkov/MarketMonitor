@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { Card, Progress, Space, Tag, Spin, Empty, Timeline, Button } from 'antd';
+import { Card, Progress, Space, Tag, Spin, Empty, Timeline } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useSearchRunStages } from '../hooks/usePipelineRunner';
 

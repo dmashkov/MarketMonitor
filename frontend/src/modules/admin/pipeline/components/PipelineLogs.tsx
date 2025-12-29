@@ -8,7 +8,7 @@
  * - Real-time updates
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   Card,
@@ -59,9 +59,9 @@ interface SearchRunStage {
   metadata: Record<string, unknown>;
 }
 
-interface ExpandedRowData {
-  stages: SearchRunStage[];
-}
+// interface ExpandedRowData {
+//   stages: SearchRunStage[];
+// }
 
 export const PipelineLogs: React.FC = () => {
   const [selectedRun, setSelectedRun] = useState<SearchRun | null>(null);
@@ -118,13 +118,13 @@ export const PipelineLogs: React.FC = () => {
   });
 
   // Expand row handler
-  const handleExpandRow = async (record: SearchRun) => {
-    if (expandedRowKeys.includes(record.id)) {
-      setExpandedRowKeys(expandedRowKeys.filter((key) => key !== record.id));
-    } else {
-      setExpandedRowKeys([...expandedRowKeys, record.id]);
-    }
-  };
+  // const handleExpandRow = async (record: SearchRun) => {
+  //   if (expandedRowKeys.includes(record.id)) {
+  //     setExpandedRowKeys(expandedRowKeys.filter((key) => key !== record.id));
+  //   } else {
+  //     setExpandedRowKeys([...expandedRowKeys, record.id]);
+  //   }
+  // };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -248,7 +248,7 @@ export const PipelineLogs: React.FC = () => {
       title: 'Действия',
       key: 'actions',
       width: 100,
-      render: (_, record: SearchRun) => (
+      render: (_text: unknown, record: SearchRun) => (
         <Space>
           <Button
             type="text"

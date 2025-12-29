@@ -11,6 +11,8 @@ export interface SourceHunterRequest {
   date_range_days?: number;
   monitoring_profile_id?: string;
   search_run_id?: string;
+  min_source_priority?: number;    // NEW: Filter sources by priority (5/3/2)
+  max_sources_per_run?: number;    // NEW: Limit number of sources
 }
 
 export interface SourceHunterResponse {
@@ -35,4 +37,11 @@ export interface SearchResult {
   title: string;
   url: string;
   snippet: string;
+}
+
+export interface Segment {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
 }

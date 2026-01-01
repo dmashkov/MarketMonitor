@@ -34,7 +34,7 @@ FROM get_documents_needing_fetch(5);
 
 -- IMPORTANT: This will make HTTP requests to external URLs!
 -- Uncomment the line below to execute:
-
+claudeclaude
 -- SELECT * FROM fetch_pending_documents(5);
 
 -- ============================================================================

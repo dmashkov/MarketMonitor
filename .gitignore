@@ -24,6 +24,9 @@ build/
 *.sublime-project
 *.sublime-workspace
 
+# Claude Code settings (may contain personal access tokens)
+.claude/settings.local.json
+
 # Logs
 logs/
 *.log
@@ -46,6 +49,15 @@ coverage/
 # Supabase
 .supabase/
 supabase/seed.sql
+
+# SQL scripts with potential secrets
+sql-scripts/*
+!sql-scripts/README.md
+!sql-scripts/.gitkeep
+
+# Test scripts (may contain API keys)
+*.ps1
+test_*.sh
 
 # OS
 .DS_Store

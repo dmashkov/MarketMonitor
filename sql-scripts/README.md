@@ -1,5 +1,21 @@
 # SQL Utility Scripts
 
+⚠️ **SECURITY WARNING: This directory is in `.gitignore`!**
+
+**NEVER commit files with:**
+- Production secrets or API keys
+- Hardcoded JWT tokens
+- Service role keys
+- Database passwords
+
+Use Supabase Vault for secrets in SQL:
+```sql
+SELECT decrypted_secret FROM vault.decrypted_secrets
+WHERE name = 'SUPABASE_SERVICE_ROLE_KEY'
+```
+
+---
+
 Полезные SQL скрипты для администрирования и диагностики MarketMonitor.
 
 ## 📋 Содержимое

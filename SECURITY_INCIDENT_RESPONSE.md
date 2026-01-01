@@ -128,24 +128,33 @@ If you don't need git history:
 
 ---
 
-## 🔒 STEP 3: Apply Migration 051 (Fix pg_cron Security)
+## 🔒 STEP 3: Apply Migrations 052 + 051 (Fix Vault + pg_cron)
 
-**Time:** 2 minutes
-**Why:** pg_cron job still uses old hardcoded JWT
+**Time:** 5 minutes
+**Why:** pg_cron job still uses old hardcoded JWT + need vault helper functions
 
 ### Instructions:
 
 1. Open Supabase Dashboard SQL Editor:
    https://supabase.com/dashboard/project/aggiamgeplckdrnbqmob/sql/new
 
-2. Copy and paste migration 051:
+2. **FIRST: Apply migration 052** (vault helper functions):
    ```sql
-   -- See: supabase/migrations/051_fix_pg_cron_security.sql
+   -- Copy full content from: supabase/migrations/052_create_vault_helper_functions.sql
+   -- Paste and execute
    ```
 
-3. Run the migration
+   Expected output: `✅ Migration 052 complete!`
 
-4. Verify it worked:
+3. **THEN: Apply migration 051** (secure pg_cron job):
+   ```sql
+   -- Copy full content from: supabase/migrations/051_fix_pg_cron_security.sql
+   -- Paste and execute
+   ```
+
+   Expected output: `✅ Migration 051 complete!`
+
+4. Verify pg_cron job:
    ```sql
    SELECT jobid, jobname, schedule, active
    FROM cron.job
@@ -167,25 +176,32 @@ After rotating the Service Role Key (Step 1):
 
 1. Open Supabase Dashboard SQL Editor
 
-2. Add/update vault secret:
+2. **FIRST: Apply migration 052** (if not done yet):
    ```sql
-   INSERT INTO vault.secrets (name, secret, description)
-   VALUES (
+   -- Copy content from: supabase/migrations/052_create_vault_helper_functions.sql
+   -- This creates upsert_vault_secret() function
+   ```
+
+3. Add/update vault secret using the helper function:
+   ```sql
+   SELECT upsert_vault_secret(
      'SUPABASE_SERVICE_ROLE_KEY',
      'YOUR_NEW_SERVICE_ROLE_KEY_FROM_STEP_1',
      'Service Role Key for calling Edge Functions from SQL'
-   )
-   ON CONFLICT (name) DO UPDATE
-   SET secret = EXCLUDED.secret,
-       updated_at = NOW();
+   );
    ```
 
-3. Verify:
+4. Verify:
    ```sql
-   SELECT name, description, created_at, updated_at
-   FROM vault.secrets
-   WHERE name = 'SUPABASE_SERVICE_ROLE_KEY';
+   -- Check if secret exists
+   SELECT vault_secret_exists('SUPABASE_SERVICE_ROLE_KEY');
+
+   -- List all secrets (names only, not values)
+   SELECT * FROM list_vault_secrets();
    ```
+
+**Why use the function?**
+Direct `INSERT INTO vault.secrets` fails with permission error. The `upsert_vault_secret()` function uses `SECURITY DEFINER` to bypass this.
 
 ---
 

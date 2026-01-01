@@ -5,10 +5,17 @@
 -- This migration recreates the pg_cron job using secure vault access
 
 -- =====================================================
--- STEP 1: Drop old insecure cron job
+-- STEP 1: Drop old insecure cron job (if exists)
 -- =====================================================
 
-SELECT cron.unschedule('process-pipeline-jobs');
+-- Safely unschedule job (ignore error if doesn't exist)
+DO $$
+BEGIN
+  PERFORM cron.unschedule('process-pipeline-jobs');
+  RAISE NOTICE 'Old cron job unscheduled successfully';
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'No existing cron job to unschedule (this is OK)';
+END $$;
 
 -- =====================================================
 -- STEP 2: Create secure cron job using vault

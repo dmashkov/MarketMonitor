@@ -1,6 +1,16 @@
 -- Migration 052: Create helper functions for vault secret management
 -- Purpose: Provide secure way to add/update secrets in vault
 --
+-- ⚠️ WARNING: THIS MIGRATION DOESN'T WORK!
+-- Problem: Even SECURITY DEFINER can't bypass pgsodium vault permissions
+-- Error: "permission denied for function _crypto_aead_det_noncegen"
+--
+-- SOLUTION: Use Supabase Dashboard UI instead
+-- URL: https://supabase.com/dashboard/project/{project}/settings/vault/secrets
+--
+-- This migration is kept for reference only.
+-- DO NOT apply it - it will fail.
+--
 -- SECURITY: Uses SECURITY DEFINER to allow authenticated users to manage secrets
 -- without direct access to vault.secrets table
 

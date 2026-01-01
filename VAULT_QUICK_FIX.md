@@ -2,50 +2,53 @@
 
 **Error:** `permission denied for function _crypto_aead_det_noncegen`
 
-**Solution:** Use helper function instead of direct INSERT
+**Solution:** ❌ SQL doesn't work! ✅ Use Supabase Dashboard UI
 
 ---
 
-## 📋 IMMEDIATE STEPS (10 minutes)
+## 🚫 Why SQL Fails
 
-### 1️⃣ Apply Migration 052 (2 min)
+Vault uses `pgsodium` encryption which requires `supabase_admin` role.
+SQL Editor runs as `postgres` which doesn't have these permissions.
 
-Open Supabase SQL Editor and run:
-
-```sql
--- =====================================================
--- Copy FULL content from:
--- supabase/migrations/052_create_vault_helper_functions.sql
--- =====================================================
-
--- Then verify it worked:
-SELECT * FROM list_vault_secrets();
-```
-
-Expected: List of secret names (should return empty if no secrets yet)
+**Only works:**
+- ✅ Supabase Dashboard UI (recommended)
+- ✅ Supabase CLI `secrets set`
 
 ---
 
-### 2️⃣ Add Service Role Key to Vault (1 min)
+## 📋 CORRECT STEPS (3 minutes)
 
-**IMPORTANT:** Replace `YOUR_NEW_KEY_HERE` with the key from Supabase Dashboard!
+### 1️⃣ Open Vault in Dashboard (30 sec)
+
+Go to: https://supabase.com/dashboard/project/aggiamgeplckdrnbqmob/settings/vault/secrets
+
+---
+
+### 2️⃣ Add Service Role Key (1 min)
+
+1. Click **"New secret"** button
+
+2. Fill in:
+   - **Name:** `SUPABASE_SERVICE_ROLE_KEY`
+   - **Secret:** Your new service_role key (from API settings)
+   - **Description:** Service Role Key for calling Edge Functions from SQL
+
+3. Click **"Add secret"**
+
+✅ Done! No SQL needed.
+
+---
+
+### 3️⃣ Verify in SQL (30 sec)
+
+Now you can verify it worked:
 
 ```sql
-SELECT upsert_vault_secret(
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'YOUR_NEW_KEY_HERE',
-  'Service Role Key for calling Edge Functions from SQL'
-);
-```
-
-Expected output:
-```json
-{
-  "success": true,
-  "secret_id": "uuid-here",
-  "secret_name": "SUPABASE_SERVICE_ROLE_KEY",
-  "message": "Secret added/updated successfully"
-}
+SELECT name, description, created_at
+FROM vault.secrets
+WHERE name = 'SUPABASE_SERVICE_ROLE_KEY';
+-- Should return 1 row
 ```
 
 ---

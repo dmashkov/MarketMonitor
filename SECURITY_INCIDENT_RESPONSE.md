@@ -128,25 +128,17 @@ If you don't need git history:
 
 ---
 
-## 🔒 STEP 3: Apply Migrations 052 + 051 (Fix Vault + pg_cron)
+## 🔒 STEP 3: Apply Migration 051 (Fix pg_cron Security)
 
-**Time:** 5 minutes
-**Why:** pg_cron job still uses old hardcoded JWT + need vault helper functions
+**Time:** 2 minutes
+**Why:** pg_cron job still uses old hardcoded JWT
 
 ### Instructions:
 
 1. Open Supabase Dashboard SQL Editor:
    https://supabase.com/dashboard/project/aggiamgeplckdrnbqmob/sql/new
 
-2. **FIRST: Apply migration 052** (vault helper functions):
-   ```sql
-   -- Copy full content from: supabase/migrations/052_create_vault_helper_functions.sql
-   -- Paste and execute
-   ```
-
-   Expected output: `✅ Migration 052 complete!`
-
-3. **THEN: Apply migration 051** (secure pg_cron job):
+2. **Apply migration 051** (secure pg_cron job):
    ```sql
    -- Copy full content from: supabase/migrations/051_fix_pg_cron_security.sql
    -- Paste and execute
@@ -154,54 +146,57 @@ If you don't need git history:
 
    Expected output: `✅ Migration 051 complete!`
 
-4. Verify pg_cron job:
+3. Verify pg_cron job:
    ```sql
    SELECT jobid, jobname, schedule, active
    FROM cron.job
    WHERE jobname = 'process-pipeline-jobs';
    ```
 
-Expected output: 1 row with `active = true`
+   Expected output: 1 row with `active = true`
+
+**Note:** Migration 052 is NOT needed. It was an attempt to add vault secrets via SQL, but only Supabase Dashboard UI can write to vault.
 
 ---
 
 ## 🔐 STEP 4: Update Vault with New Key
 
-**Time:** 3 minutes
+**Time:** 2 minutes
 **Why:** Migration 051 reads from vault
+
+### ⚠️ IMPORTANT: Use Dashboard UI (NOT SQL!)
+
+SQL Editor cannot write to vault due to `pgsodium` encryption permissions.
+**Use Supabase Dashboard UI instead.**
 
 ### Instructions:
 
-After rotating the Service Role Key (Step 1):
+1. **Get your NEW service_role key** (from Step 1):
+   - Should start with `eyJhbGciOiJIUzI1NiIs...`
+   - If you didn't rotate yet: https://supabase.com/dashboard/project/aggiamgeplckdrnbqmob/settings/api
 
-1. Open Supabase Dashboard SQL Editor
+2. **Open Vault Settings:**
+   https://supabase.com/dashboard/project/aggiamgeplckdrnbqmob/settings/vault/secrets
 
-2. **FIRST: Apply migration 052** (if not done yet):
+3. **Click "New secret"** button
+
+4. **Fill in the form:**
+   - Name: `SUPABASE_SERVICE_ROLE_KEY`
+   - Secret: Paste your service_role key
+   - Description: `Service Role Key for calling Edge Functions from SQL`
+
+5. **Click "Add secret"**
+
+6. **Verify in SQL Editor:**
    ```sql
-   -- Copy content from: supabase/migrations/052_create_vault_helper_functions.sql
-   -- This creates upsert_vault_secret() function
+   SELECT name, description, created_at
+   FROM vault.secrets
+   WHERE name = 'SUPABASE_SERVICE_ROLE_KEY';
+   -- Should return 1 row
    ```
 
-3. Add/update vault secret using the helper function:
-   ```sql
-   SELECT upsert_vault_secret(
-     'SUPABASE_SERVICE_ROLE_KEY',
-     'YOUR_NEW_SERVICE_ROLE_KEY_FROM_STEP_1',
-     'Service Role Key for calling Edge Functions from SQL'
-   );
-   ```
-
-4. Verify:
-   ```sql
-   -- Check if secret exists
-   SELECT vault_secret_exists('SUPABASE_SERVICE_ROLE_KEY');
-
-   -- List all secrets (names only, not values)
-   SELECT * FROM list_vault_secrets();
-   ```
-
-**Why use the function?**
-Direct `INSERT INTO vault.secrets` fails with permission error. The `upsert_vault_secret()` function uses `SECURITY DEFINER` to bypass this.
+**Why Dashboard UI and not SQL?**
+Only `supabase_admin` role can write to vault. SQL Editor runs as `postgres` which lacks pgsodium crypto permissions.
 
 ---
 

@@ -26,7 +26,7 @@ SELECT cron.schedule(
     url := 'https://aggiamgeplckdrnbqmob.supabase.co/functions/v1/job-processor',
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer YOUR_SERVICE_ROLE_KEY_2_HERE'
+      'Authorization', 'Bearer YOUR_SERVICE_ROLE_KEY_HERE'
     ),
     body := '{}'::jsonb
   ) AS request_id;
